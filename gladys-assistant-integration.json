@@ -1,177 +1,839 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "MBTA Boston",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Unofficial. Next MBTA departures and service alerts at your stops (Boston).",
+    "fr": "Non officiel. Prochains départs et alertes du MBTA à vos arrêts (Boston)."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "version": "0.1.0",
+  "docker_image": "ghcr.io/lm1lc3n7/gladys-mbta:0.1.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/LM1LC3N7/gladys-mbta/main/cover.png",
+  "categories": ["transport"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "MBTA departures and alerts",
+        "fr": "Départs et alertes du MBTA"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "The next departures (subway, light rail, bus, commuter rail, ferry) and the service alerts at up to five stops of the MBTA (Boston area), read from the public MBTA V3 API: no account, no key. Each stop is a device. The departures are the MBTA real-time predictions: a trip that is not tracked yet is not counted. Data in English only. Check mbta.com before you travel: this integration is not an official source.",
+        "fr": "Les prochains départs (métro, tramway, bus, train de banlieue, traversier) et les alertes de service à cinq arrêts au plus du MBTA (région de Boston), lus sur l'API publique MBTA V3 : sans compte ni clé. Chaque arrêt est un appareil. Les départs sont les prévisions temps réel du MBTA : un trajet pas encore suivi n'est pas compté. Données en anglais seulement. Vérifiez sur mbta.com avant de partir : cette intégration n'est pas une source officielle."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://www.mbta.com/",
+          "label": {
+            "en": "MBTA",
+            "fr": "MBTA"
+          }
+        },
+        {
+          "url": "https://www.mbta.com/developers/v3-api",
+          "label": {
+            "en": "MBTA V3 API",
+            "fr": "API MBTA V3"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the texts",
+        "fr": "Langue des textes"
+      },
+      "description": {
+        "en": "Language of the device names and of the departure summary (MBTA stop names and alerts stay in English).",
+        "fr": "Langue des noms d'appareils et du résumé des départs (les noms d'arrêts et les alertes du MBTA restent en anglais)."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "en",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
+      "key": "refresh_seconds",
       "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "label": {
+        "en": "Read interval of the departures (seconds)",
+        "fr": "Intervalle de lecture des départs (secondes)"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "From 30 to 600 seconds. One request reads the departures of every stop; the alerts are read every 5 minutes. The MBTA allows 20 requests per minute without a key.",
+        "fr": "De 30 à 600 secondes. Une requête lit les départs de tous les arrêts ; les alertes sont lues toutes les 5 minutes. Le MBTA permet 20 requêtes par minute sans clé."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": 60,
+      "min": 30,
+      "max": 600
+    },
+    {
+      "key": "watch1",
+      "type": "section",
+      "label": {
+        "en": "Stop 1",
+        "fr": "Arrêt 1"
+      },
+      "description": {
+        "en": "A stop or a station of the MBTA. Its id is at the end of its page on mbta.com: mbta.com/stops/place-pktrm is Park Street (a station: every platform), mbta.com/stops/1 a bus stop. Required.",
+        "fr": "Un arrêt ou une station du MBTA. Son identifiant est à la fin de sa page sur mbta.com : mbta.com/stops/place-pktrm est Park Street (une station : tous ses quais), mbta.com/stops/1 un arrêt de bus. Obligatoire."
+      }
+    },
+    {
+      "key": "watch1_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom"
+      },
+      "description": {
+        "en": "Name of the device in Gladys (60 characters at most). Empty: the MBTA name of the stop.",
+        "fr": "Nom de l'appareil dans Gladys (60 caractères au plus). Vide : le nom MBTA de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Subway to work",
+        "fr": "ex. Métro du travail"
+      },
+      "required": false
+    },
+    {
+      "key": "watch1_stop",
+      "type": "string",
+      "label": {
+        "en": "Stop id",
+        "fr": "Identifiant de l'arrêt"
+      },
+      "description": {
+        "en": "The id of the stop or station on mbta.com (letters, digits, - and _).",
+        "fr": "L'identifiant de l'arrêt ou de la station sur mbta.com (lettres, chiffres, - et _)."
+      },
+      "placeholder": {
+        "en": "e.g. place-pktrm",
+        "fr": "ex. place-pktrm"
+      },
+      "required": true
+    },
+    {
+      "key": "watch1_routes",
+      "type": "string",
+      "label": {
+        "en": "Only these routes",
+        "fr": "Seulement ces lignes"
+      },
+      "description": {
+        "en": "Optional: route ids or bus numbers, separated by commas (\"Red\", \"Green-B\", \"1, 47\", \"CR-Worcester\"). Each one must call at the stop. Empty: every route of the stop.",
+        "fr": "Facultatif : identifiants de lignes ou numéros de bus, séparés par des virgules (« Red », « Green-B », « 1, 47 », « CR-Worcester »). Chacune doit desservir l'arrêt. Vide : toutes les lignes de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Red",
+        "fr": "ex. Red"
+      },
+      "required": false
+    },
+    {
+      "key": "watch1_direction",
+      "type": "select",
+      "label": {
+        "en": "Direction",
+        "fr": "Direction"
+      },
+      "description": {
+        "en": "The MBTA numbers the two directions of a route 0 and 1.",
+        "fr": "Le MBTA numérote 0 et 1 les deux directions d'une ligne."
+      },
+      "required": false,
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": {
+            "en": "Both directions",
+            "fr": "Les deux directions"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "en": "0: outbound, southbound or westbound",
+            "fr": "0 : sortante, vers le sud ou l'ouest"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "en": "1: inbound, northbound or eastbound",
+            "fr": "1 : entrante, vers le nord ou l'est"
+          }
+        }
+      ]
+    },
+    {
+      "key": "watch2",
+      "type": "section",
+      "label": {
+        "en": "Stop 2 (optional)",
+        "fr": "Arrêt 2 (facultatif)"
+      },
+      "description": {
+        "en": "A stop or a station of the MBTA. Its id is at the end of its page on mbta.com: mbta.com/stops/place-pktrm is Park Street (a station: every platform), mbta.com/stops/1 a bus stop. Leave the id empty to turn it off.",
+        "fr": "Un arrêt ou une station du MBTA. Son identifiant est à la fin de sa page sur mbta.com : mbta.com/stops/place-pktrm est Park Street (une station : tous ses quais), mbta.com/stops/1 un arrêt de bus. Laissez l'identifiant vide pour le désactiver."
+      }
+    },
+    {
+      "key": "watch2_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom"
+      },
+      "description": {
+        "en": "Name of the device in Gladys (60 characters at most). Empty: the MBTA name of the stop.",
+        "fr": "Nom de l'appareil dans Gladys (60 caractères au plus). Vide : le nom MBTA de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Subway to work",
+        "fr": "ex. Métro du travail"
+      },
+      "required": false
+    },
+    {
+      "key": "watch2_stop",
+      "type": "string",
+      "label": {
+        "en": "Stop id",
+        "fr": "Identifiant de l'arrêt"
+      },
+      "description": {
+        "en": "The id of the stop or station on mbta.com (letters, digits, - and _).",
+        "fr": "L'identifiant de l'arrêt ou de la station sur mbta.com (lettres, chiffres, - et _)."
+      },
+      "placeholder": {
+        "en": "e.g. place-pktrm",
+        "fr": "ex. place-pktrm"
+      },
+      "required": false
+    },
+    {
+      "key": "watch2_routes",
+      "type": "string",
+      "label": {
+        "en": "Only these routes",
+        "fr": "Seulement ces lignes"
+      },
+      "description": {
+        "en": "Optional: route ids or bus numbers, separated by commas (\"Red\", \"Green-B\", \"1, 47\", \"CR-Worcester\"). Each one must call at the stop. Empty: every route of the stop.",
+        "fr": "Facultatif : identifiants de lignes ou numéros de bus, séparés par des virgules (« Red », « Green-B », « 1, 47 », « CR-Worcester »). Chacune doit desservir l'arrêt. Vide : toutes les lignes de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Red",
+        "fr": "ex. Red"
+      },
+      "required": false
+    },
+    {
+      "key": "watch2_direction",
+      "type": "select",
+      "label": {
+        "en": "Direction",
+        "fr": "Direction"
+      },
+      "description": {
+        "en": "The MBTA numbers the two directions of a route 0 and 1.",
+        "fr": "Le MBTA numérote 0 et 1 les deux directions d'une ligne."
+      },
+      "required": false,
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": {
+            "en": "Both directions",
+            "fr": "Les deux directions"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "en": "0: outbound, southbound or westbound",
+            "fr": "0 : sortante, vers le sud ou l'ouest"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "en": "1: inbound, northbound or eastbound",
+            "fr": "1 : entrante, vers le nord ou l'est"
+          }
+        }
+      ]
+    },
+    {
+      "key": "watch3",
+      "type": "section",
+      "label": {
+        "en": "Stop 3 (optional)",
+        "fr": "Arrêt 3 (facultatif)"
+      },
+      "description": {
+        "en": "A stop or a station of the MBTA. Its id is at the end of its page on mbta.com: mbta.com/stops/place-pktrm is Park Street (a station: every platform), mbta.com/stops/1 a bus stop. Leave the id empty to turn it off.",
+        "fr": "Un arrêt ou une station du MBTA. Son identifiant est à la fin de sa page sur mbta.com : mbta.com/stops/place-pktrm est Park Street (une station : tous ses quais), mbta.com/stops/1 un arrêt de bus. Laissez l'identifiant vide pour le désactiver."
+      }
+    },
+    {
+      "key": "watch3_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom"
+      },
+      "description": {
+        "en": "Name of the device in Gladys (60 characters at most). Empty: the MBTA name of the stop.",
+        "fr": "Nom de l'appareil dans Gladys (60 caractères au plus). Vide : le nom MBTA de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Subway to work",
+        "fr": "ex. Métro du travail"
+      },
+      "required": false
+    },
+    {
+      "key": "watch3_stop",
+      "type": "string",
+      "label": {
+        "en": "Stop id",
+        "fr": "Identifiant de l'arrêt"
+      },
+      "description": {
+        "en": "The id of the stop or station on mbta.com (letters, digits, - and _).",
+        "fr": "L'identifiant de l'arrêt ou de la station sur mbta.com (lettres, chiffres, - et _)."
+      },
+      "placeholder": {
+        "en": "e.g. place-pktrm",
+        "fr": "ex. place-pktrm"
+      },
+      "required": false
+    },
+    {
+      "key": "watch3_routes",
+      "type": "string",
+      "label": {
+        "en": "Only these routes",
+        "fr": "Seulement ces lignes"
+      },
+      "description": {
+        "en": "Optional: route ids or bus numbers, separated by commas (\"Red\", \"Green-B\", \"1, 47\", \"CR-Worcester\"). Each one must call at the stop. Empty: every route of the stop.",
+        "fr": "Facultatif : identifiants de lignes ou numéros de bus, séparés par des virgules (« Red », « Green-B », « 1, 47 », « CR-Worcester »). Chacune doit desservir l'arrêt. Vide : toutes les lignes de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Red",
+        "fr": "ex. Red"
+      },
+      "required": false
+    },
+    {
+      "key": "watch3_direction",
+      "type": "select",
+      "label": {
+        "en": "Direction",
+        "fr": "Direction"
+      },
+      "description": {
+        "en": "The MBTA numbers the two directions of a route 0 and 1.",
+        "fr": "Le MBTA numérote 0 et 1 les deux directions d'une ligne."
+      },
+      "required": false,
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": {
+            "en": "Both directions",
+            "fr": "Les deux directions"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "en": "0: outbound, southbound or westbound",
+            "fr": "0 : sortante, vers le sud ou l'ouest"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "en": "1: inbound, northbound or eastbound",
+            "fr": "1 : entrante, vers le nord ou l'est"
+          }
+        }
+      ]
+    },
+    {
+      "key": "watch4",
+      "type": "section",
+      "label": {
+        "en": "Stop 4 (optional)",
+        "fr": "Arrêt 4 (facultatif)"
+      },
+      "description": {
+        "en": "A stop or a station of the MBTA. Its id is at the end of its page on mbta.com: mbta.com/stops/place-pktrm is Park Street (a station: every platform), mbta.com/stops/1 a bus stop. Leave the id empty to turn it off.",
+        "fr": "Un arrêt ou une station du MBTA. Son identifiant est à la fin de sa page sur mbta.com : mbta.com/stops/place-pktrm est Park Street (une station : tous ses quais), mbta.com/stops/1 un arrêt de bus. Laissez l'identifiant vide pour le désactiver."
+      }
+    },
+    {
+      "key": "watch4_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom"
+      },
+      "description": {
+        "en": "Name of the device in Gladys (60 characters at most). Empty: the MBTA name of the stop.",
+        "fr": "Nom de l'appareil dans Gladys (60 caractères au plus). Vide : le nom MBTA de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Subway to work",
+        "fr": "ex. Métro du travail"
+      },
+      "required": false
+    },
+    {
+      "key": "watch4_stop",
+      "type": "string",
+      "label": {
+        "en": "Stop id",
+        "fr": "Identifiant de l'arrêt"
+      },
+      "description": {
+        "en": "The id of the stop or station on mbta.com (letters, digits, - and _).",
+        "fr": "L'identifiant de l'arrêt ou de la station sur mbta.com (lettres, chiffres, - et _)."
+      },
+      "placeholder": {
+        "en": "e.g. place-pktrm",
+        "fr": "ex. place-pktrm"
+      },
+      "required": false
+    },
+    {
+      "key": "watch4_routes",
+      "type": "string",
+      "label": {
+        "en": "Only these routes",
+        "fr": "Seulement ces lignes"
+      },
+      "description": {
+        "en": "Optional: route ids or bus numbers, separated by commas (\"Red\", \"Green-B\", \"1, 47\", \"CR-Worcester\"). Each one must call at the stop. Empty: every route of the stop.",
+        "fr": "Facultatif : identifiants de lignes ou numéros de bus, séparés par des virgules (« Red », « Green-B », « 1, 47 », « CR-Worcester »). Chacune doit desservir l'arrêt. Vide : toutes les lignes de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Red",
+        "fr": "ex. Red"
+      },
+      "required": false
+    },
+    {
+      "key": "watch4_direction",
+      "type": "select",
+      "label": {
+        "en": "Direction",
+        "fr": "Direction"
+      },
+      "description": {
+        "en": "The MBTA numbers the two directions of a route 0 and 1.",
+        "fr": "Le MBTA numérote 0 et 1 les deux directions d'une ligne."
+      },
+      "required": false,
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": {
+            "en": "Both directions",
+            "fr": "Les deux directions"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "en": "0: outbound, southbound or westbound",
+            "fr": "0 : sortante, vers le sud ou l'ouest"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "en": "1: inbound, northbound or eastbound",
+            "fr": "1 : entrante, vers le nord ou l'est"
+          }
+        }
+      ]
+    },
+    {
+      "key": "watch5",
+      "type": "section",
+      "label": {
+        "en": "Stop 5 (optional)",
+        "fr": "Arrêt 5 (facultatif)"
+      },
+      "description": {
+        "en": "A stop or a station of the MBTA. Its id is at the end of its page on mbta.com: mbta.com/stops/place-pktrm is Park Street (a station: every platform), mbta.com/stops/1 a bus stop. Leave the id empty to turn it off.",
+        "fr": "Un arrêt ou une station du MBTA. Son identifiant est à la fin de sa page sur mbta.com : mbta.com/stops/place-pktrm est Park Street (une station : tous ses quais), mbta.com/stops/1 un arrêt de bus. Laissez l'identifiant vide pour le désactiver."
+      }
+    },
+    {
+      "key": "watch5_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom"
+      },
+      "description": {
+        "en": "Name of the device in Gladys (60 characters at most). Empty: the MBTA name of the stop.",
+        "fr": "Nom de l'appareil dans Gladys (60 caractères au plus). Vide : le nom MBTA de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Subway to work",
+        "fr": "ex. Métro du travail"
+      },
+      "required": false
+    },
+    {
+      "key": "watch5_stop",
+      "type": "string",
+      "label": {
+        "en": "Stop id",
+        "fr": "Identifiant de l'arrêt"
+      },
+      "description": {
+        "en": "The id of the stop or station on mbta.com (letters, digits, - and _).",
+        "fr": "L'identifiant de l'arrêt ou de la station sur mbta.com (lettres, chiffres, - et _)."
+      },
+      "placeholder": {
+        "en": "e.g. place-pktrm",
+        "fr": "ex. place-pktrm"
+      },
+      "required": false
+    },
+    {
+      "key": "watch5_routes",
+      "type": "string",
+      "label": {
+        "en": "Only these routes",
+        "fr": "Seulement ces lignes"
+      },
+      "description": {
+        "en": "Optional: route ids or bus numbers, separated by commas (\"Red\", \"Green-B\", \"1, 47\", \"CR-Worcester\"). Each one must call at the stop. Empty: every route of the stop.",
+        "fr": "Facultatif : identifiants de lignes ou numéros de bus, séparés par des virgules (« Red », « Green-B », « 1, 47 », « CR-Worcester »). Chacune doit desservir l'arrêt. Vide : toutes les lignes de l'arrêt."
+      },
+      "placeholder": {
+        "en": "e.g. Red",
+        "fr": "ex. Red"
+      },
+      "required": false
+    },
+    {
+      "key": "watch5_direction",
+      "type": "select",
+      "label": {
+        "en": "Direction",
+        "fr": "Direction"
+      },
+      "description": {
+        "en": "The MBTA numbers the two directions of a route 0 and 1.",
+        "fr": "Le MBTA numérote 0 et 1 les deux directions d'une ligne."
+      },
+      "required": false,
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": {
+            "en": "Both directions",
+            "fr": "Les deux directions"
+          }
+        },
+        {
+          "value": "0",
+          "label": {
+            "en": "0: outbound, southbound or westbound",
+            "fr": "0 : sortante, vers le sud ou l'ouest"
+          }
+        },
+        {
+          "value": "1",
+          "label": {
+            "en": "1: inbound, northbound or eastbound",
+            "fr": "1 : entrante, vers le nord ou l'est"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "test",
+      "label": {
+        "en": "Show the last read",
+        "fr": "Voir la dernière lecture"
+      },
+      "timeout_seconds": 10
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "new_alert",
+      "label": {
+        "en": "New MBTA alert at a stop",
+        "fr": "Nouvelle alerte MBTA à un arrêt"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "An alert in effect appears at a watched stop for the first time (created, updated or started within the last 2 hours). Not fired by the first read of a stop.",
+        "fr": "Une alerte en cours apparaît pour la première fois à un arrêt suivi (créée, mise à jour ou commencée dans les 2 dernières heures). Pas déclenché par la première lecture d'un arrêt."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Stop",
+            "fr": "Arrêt"
+          }
         },
         {
-          "key": "target",
+          "key": "effect",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "Effects",
+            "fr": "Effets"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "DELAY",
+              "label": {
+                "en": "Delay",
+                "fr": "Retard"
+              }
+            },
+            {
+              "value": "SHUTTLE",
+              "label": {
+                "en": "Shuttle buses",
+                "fr": "Navettes de bus"
+              }
+            },
+            {
+              "value": "SUSPENSION",
+              "label": {
+                "en": "Suspension",
+                "fr": "Suspension"
+              }
+            },
+            {
+              "value": "DETOUR",
+              "label": {
+                "en": "Detour",
+                "fr": "Détour"
+              }
+            },
+            {
+              "value": "STOP_CLOSURE",
+              "label": {
+                "en": "Stop closed",
+                "fr": "Arrêt fermé"
+              }
+            },
+            {
+              "value": "STATION_CLOSURE",
+              "label": {
+                "en": "Station closed",
+                "fr": "Station fermée"
+              }
+            },
+            {
+              "value": "STOP_MOVE",
+              "label": {
+                "en": "Stop moved",
+                "fr": "Arrêt déplacé"
+              }
+            },
+            {
+              "value": "SERVICE_CHANGE",
+              "label": {
+                "en": "Service change",
+                "fr": "Changement de service"
+              }
+            },
+            {
+              "value": "SCHEDULE_CHANGE",
+              "label": {
+                "en": "Schedule change",
+                "fr": "Changement d'horaire"
+              }
+            },
+            {
+              "value": "TRACK_CHANGE",
+              "label": {
+                "en": "Track change",
+                "fr": "Changement de voie"
+              }
+            },
+            {
+              "value": "CANCELLATION",
+              "label": {
+                "en": "Cancellation",
+                "fr": "Annulation"
+              }
+            },
+            {
+              "value": "SNOW_ROUTE",
+              "label": {
+                "en": "Snow route",
+                "fr": "Itinéraire de neige"
+              }
+            },
+            {
+              "value": "OTHER",
+              "label": {
+                "en": "Other",
+                "fr": "Autre"
+              }
+            }
+          ]
+        },
+        {
+          "key": "severity_band",
+          "type": "multi_select",
+          "label": {
+            "en": "Severity",
+            "fr": "Gravité"
+          },
+          "options": [
+            {
+              "value": "severe",
+              "label": {
+                "en": "Severe (7 to 10)",
+                "fr": "Grave (7 à 10)"
+              }
+            },
+            {
+              "value": "moderate",
+              "label": {
+                "en": "Moderate (4 to 6)",
+                "fr": "Modérée (4 à 6)"
+              }
+            },
+            {
+              "value": "minor",
+              "label": {
+                "en": "Minor (0 to 3)",
+                "fr": "Mineure (0 à 3)"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "header",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Alert text (English)",
+            "fr": "Texte de l'alerte (anglais)"
+          }
+        },
+        {
+          "key": "description",
+          "type": "string",
+          "label": {
+            "en": "Details (English)",
+            "fr": "Détails (anglais)"
+          }
+        },
+        {
+          "key": "effect",
+          "type": "string",
+          "label": {
+            "en": "Effect",
+            "fr": "Effet"
+          }
+        },
+        {
+          "key": "severity_band",
+          "type": "string",
+          "label": {
+            "en": "Severity band",
+            "fr": "Niveau de gravité"
+          }
+        },
+        {
+          "key": "severity",
+          "type": "number",
+          "label": {
+            "en": "Severity (0 to 10)",
+            "fr": "Gravité (0 à 10)"
+          }
+        },
+        {
+          "key": "cause",
+          "type": "string",
+          "label": {
+            "en": "Cause",
+            "fr": "Cause"
+          }
+        },
+        {
+          "key": "lifecycle",
+          "type": "string",
+          "label": {
+            "en": "Lifecycle",
+            "fr": "Cycle de vie"
+          }
+        },
+        {
+          "key": "timeframe",
+          "type": "string",
+          "label": {
+            "en": "Timeframe (English)",
+            "fr": "Période (anglais)"
+          }
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "label": {
+            "en": "Link",
+            "fr": "Lien"
+          }
+        },
+        {
+          "key": "alert_id",
+          "type": "string",
+          "label": {
+            "en": "MBTA alert id",
+            "fr": "Identifiant MBTA de l'alerte"
+          }
         }
       ]
-    }
-  ],
-  "scene_actions": [
-    {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
-      },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
-      "outputs": [
-        {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
-        }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
-      },
-      "icon": "activity",
-      "action_timeout_seconds": 15
     }
   ]
 }

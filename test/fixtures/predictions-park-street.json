@@ -1,0 +1,650 @@
+{
+  "source": "GET /predictions?filter[stop]=place-pktrm,1&include=stop,route,trip (sparse fields), captured 2026-10-30",
+  "date": "Fri, 30 Oct 2026 06:03:08 GMT",
+  "lastModified": "Fri, 30 Oct 2026 06:03:05 GMT",
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:15:06-04:00",
+          "departure_time": "2026-10-30T02:16:15-04:00",
+          "direction_id": 0,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 6 stops away"
+        },
+        "id": "prediction-ADDED-1585028423-70199-80-Green-E",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70199",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028423",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10242",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:15:06-04:00",
+          "departure_time": "2026-10-30T02:16:15-04:00",
+          "direction_id": 0,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 6 stops away"
+        },
+        "id": "prediction-ADDED-1585028421-70199-80-Green-E",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70199",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028421",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10183",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:15:06-04:00",
+          "departure_time": "2026-10-30T02:16:15-04:00",
+          "direction_id": 0,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 6 stops away"
+        },
+        "id": "prediction-ADDED-1585028412-70199-80-Green-E",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70199",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028412",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10340",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:15:49-04:00",
+          "departure_time": "2026-10-30T02:16:54-04:00",
+          "direction_id": 0,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 6 stops away"
+        },
+        "id": "prediction-ADDED-1585028420-70198-60-Green-D",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-D",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70198",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028420",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10314",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:15:49-04:00",
+          "departure_time": "2026-10-30T02:16:54-04:00",
+          "direction_id": 0,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 6 stops away"
+        },
+        "id": "prediction-ADDED-1585028415-70198-60-Green-D",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-D",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70198",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028415",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10179",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:58:38-04:00",
+          "departure_time": "2026-10-30T02:59:38-04:00",
+          "direction_id": 1,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 35 stops away"
+        },
+        "id": "prediction-ADDED-1585028424-70200-600-Green-E",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70200",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028424",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10242",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      },
+      {
+        "attributes": {
+          "arrival_time": "2026-10-30T02:58:38-04:00",
+          "departure_time": "2026-10-30T02:59:38-04:00",
+          "direction_id": 1,
+          "schedule_relationship": "ADDED",
+          "status": "Stopped 35 stops away"
+        },
+        "id": "prediction-ADDED-1585028413-70200-600-Green-E",
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "stop": {
+            "data": {
+              "id": "70200",
+              "type": "stop"
+            }
+          },
+          "trip": {
+            "data": {
+              "id": "ADDED-1585028413",
+              "type": "trip"
+            }
+          },
+          "vehicle": {
+            "data": {
+              "id": "G-10340",
+              "type": "vehicle"
+            }
+          }
+        },
+        "type": "prediction"
+      }
+    ],
+    "included": [
+      {
+        "attributes": {
+          "name": "Park Street",
+          "platform_name": "Riverside"
+        },
+        "id": "70198",
+        "links": {
+          "self": "/stops/70198"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=70198"
+            }
+          },
+          "parent_station": {
+            "data": {
+              "id": "place-pktrm",
+              "type": "stop"
+            }
+          },
+          "zone": {
+            "data": {
+              "id": "RapidTransit",
+              "type": "zone"
+            }
+          }
+        },
+        "type": "stop"
+      },
+      {
+        "attributes": {
+          "name": "Park Street",
+          "platform_name": "Heath Street"
+        },
+        "id": "70199",
+        "links": {
+          "self": "/stops/70199"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=70199"
+            }
+          },
+          "parent_station": {
+            "data": {
+              "id": "place-pktrm",
+              "type": "stop"
+            }
+          },
+          "zone": {
+            "data": {
+              "id": "RapidTransit",
+              "type": "zone"
+            }
+          }
+        },
+        "type": "stop"
+      },
+      {
+        "attributes": {
+          "name": "Park Street",
+          "platform_name": "Government Center & North"
+        },
+        "id": "70200",
+        "links": {
+          "self": "/stops/70200"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=70200"
+            }
+          },
+          "parent_station": {
+            "data": {
+              "id": "place-pktrm",
+              "type": "stop"
+            }
+          },
+          "zone": {
+            "data": {
+              "id": "RapidTransit",
+              "type": "zone"
+            }
+          }
+        },
+        "type": "stop"
+      },
+      {
+        "attributes": {
+          "headsign": "Heath Street"
+        },
+        "id": "ADDED-1585028412",
+        "links": {
+          "self": "/trips/ADDED-1585028412"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-E-886-0",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000018",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Medford/Tufts"
+        },
+        "id": "ADDED-1585028413",
+        "links": {
+          "self": "/trips/ADDED-1585028413"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-E-886-1",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000015",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Riverside"
+        },
+        "id": "ADDED-1585028415",
+        "links": {
+          "self": "/trips/ADDED-1585028415"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-D",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-D-855-0",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000008",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Riverside"
+        },
+        "id": "ADDED-1585028420",
+        "links": {
+          "self": "/trips/ADDED-1585028420"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-D",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-D-855-0",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000008",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Heath Street"
+        },
+        "id": "ADDED-1585028421",
+        "links": {
+          "self": "/trips/ADDED-1585028421"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-E-886-0",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000018",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Heath Street"
+        },
+        "id": "ADDED-1585028423",
+        "links": {
+          "self": "/trips/ADDED-1585028423"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-E-886-0",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000018",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "headsign": "Medford/Tufts"
+        },
+        "id": "ADDED-1585028424",
+        "links": {
+          "self": "/trips/ADDED-1585028424"
+        },
+        "relationships": {
+          "route": {
+            "data": {
+              "id": "Green-E",
+              "type": "route"
+            }
+          },
+          "route_pattern": {
+            "data": {
+              "id": "Green-E-886-1",
+              "type": "route_pattern"
+            }
+          },
+          "service": {
+            "data": null
+          },
+          "shape": {
+            "data": {
+              "id": "canonical-8000015",
+              "type": "shape"
+            }
+          }
+        },
+        "type": "trip"
+      },
+      {
+        "attributes": {
+          "direction_destinations": ["Riverside", "Union Square"],
+          "direction_names": ["West", "East"],
+          "long_name": "Green Line D",
+          "short_name": "D",
+          "type": 0
+        },
+        "id": "Green-D",
+        "links": {
+          "self": "/routes/Green-D"
+        },
+        "relationships": {
+          "agency": {
+            "data": {
+              "id": "1",
+              "type": "agency"
+            }
+          },
+          "line": {
+            "data": {
+              "id": "line-Green",
+              "type": "line"
+            }
+          }
+        },
+        "type": "route"
+      },
+      {
+        "attributes": {
+          "direction_destinations": ["Heath Street", "Medford/Tufts"],
+          "direction_names": ["West", "East"],
+          "long_name": "Green Line E",
+          "short_name": "E",
+          "type": 0
+        },
+        "id": "Green-E",
+        "links": {
+          "self": "/routes/Green-E"
+        },
+        "relationships": {
+          "agency": {
+            "data": {
+              "id": "1",
+              "type": "agency"
+            }
+          },
+          "line": {
+            "data": {
+              "id": "line-Green",
+              "type": "line"
+            }
+          }
+        },
+        "type": "route"
+      }
+    ],
+    "jsonapi": {
+      "version": "1.0"
+    }
+  }
+}

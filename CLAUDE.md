@@ -15,9 +15,9 @@ its only runtime dependency. It started from the official JavaScript template.
 
 ```bash
 npm install
-npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+npm test                                  # node --test --test-timeout=60000
+node --test test/app.test.js              # one file
+node --test --test-name-pattern "429"     # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -32,17 +32,26 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
+src/app.js                        MbtaApp: rounds, pace (3 s gap, rate hold, pauses), freshness, status, scene trigger
+src/mbta.js                       one bounded GET of the MBTA V3 API (JSON:API Accept), strict reading of the resources
+src/watch.js                      what a stop sees: its departures (platforms, routes, direction), minutes, texts
+src/config.js                     strict reading of the configuration (manifest `config_schema`)
+src/devices.js                    one read-only device per watched stop (id = slot)
+src/i18n.js                       every text, English and French
+src/store.js                      /data state (last attempt, pause, alerts seen), never overwritten if unreadable
+gladys-assistant-integration.json manifest: name, config_schema, actions, scene trigger, image...
 docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/                             node --test, fake Gladys of the SDK, virtual clock (test/kit), captured fixtures
+scripts/cover.mjs                 generates cover.png (800x534), plain Node
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
+
+MBTA rules kept by the code: the `Accept: application/vnd.api+json` header (the API answers 406 otherwise); one
+request at a time, 3 s between two starts, a hold when `x-ratelimit-remaining` runs low; never sooner than the
+interval (restart, reconnection, unchanged configuration, Discovery, test button; a restart whose /data cannot
+tell the last attempt waits 30 s); 429 and 5xx pauses kept in
+/data; minutes counted against the `Date` of the answer; nothing published for a failed, unreadable or stale
+answer (`Last-Modified` more than 10 minutes before `Date`), nor "no departure" for an unconfirmed stop.
 
 ## Rules
 
@@ -56,8 +65,8 @@ test/                             node --test, against the SDK's fake Gladys (in
   writable volume. Never log tokens, passwords or API keys.
 - **Versions belong to the Release workflow** (Actions → Release). Never edit
   `version` in `package.json` or in the manifest, nor the `docker_image` tag,
-  by hand — except on the README's hand-pushed tag path, which bumps all three
-  together before tagging. `test/manifest.test.js` checks they agree.
+  by hand (0.1.0 was set by hand once, see TODO.md). `test/manifest.test.js`
+  checks they agree.
 - **Changelog.** Every user-visible change adds a line under `## [Unreleased]`
   in `CHANGELOG.md` (`### Added`, `Changed`, `Fixed`, `Removed`, `Security`).
   Never write a version heading: the Release workflow moves the section, and it

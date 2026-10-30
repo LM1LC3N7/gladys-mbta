@@ -1,0 +1,307 @@
+{
+  "source": "GET /alerts?filter[stop]=place-pktrm,place-sstat&filter[datetime]=NOW, captured 2026-10-30, texts replaced",
+  "date": "Fri, 30 Oct 2026 06:00:59 GMT",
+  "lastModified": "Fri, 30 Oct 2026 06:00:55 GMT",
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "active_period": [
+            {
+              "end": "2026-11-02T03:00:00-05:00",
+              "start": "2026-10-26T03:00:00-04:00"
+            }
+          ],
+          "banner": null,
+          "cause": "UNKNOWN_CAUSE",
+          "closed_timestamp": null,
+          "created_at": "2026-10-23T11:51:12-04:00",
+          "description": null,
+          "duration_certainty": "KNOWN",
+          "effect": "SCHEDULE_CHANGE",
+          "header": "Synthetic test text: the Worcester Line runs a new schedule.",
+          "image": null,
+          "image_alternative_text": null,
+          "informed_entity": [
+            {
+              "route_type": 2,
+              "route": "CR-Worcester",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            }
+          ],
+          "last_push_notification_timestamp": "2026-10-23T11:55:25-04:00",
+          "lifecycle": "NEW",
+          "reminder_times": null,
+          "service_effect": null,
+          "severity": 8,
+          "short_header": "",
+          "timeframe": "through Sunday",
+          "updated_at": "2026-10-23T11:55:25-04:00",
+          "url": "https://www.mbta.com/alerts"
+        },
+        "id": "1040762",
+        "links": {
+          "self": "/alerts/1040762"
+        },
+        "type": "alert"
+      },
+      {
+        "attributes": {
+          "active_period": [
+            {
+              "end": "2026-11-02T03:00:00-05:00",
+              "start": "2026-10-26T03:00:00-04:00"
+            }
+          ],
+          "banner": null,
+          "cause": "UNKNOWN_CAUSE",
+          "closed_timestamp": null,
+          "created_at": "2026-10-13T10:16:14-04:00",
+          "description": null,
+          "duration_certainty": "KNOWN",
+          "effect": "SCHEDULE_CHANGE",
+          "header": "Synthetic test text: Fairmount and Fitchburg Lines schedule change.",
+          "image": null,
+          "image_alternative_text": null,
+          "informed_entity": [
+            {
+              "route_type": 2,
+              "route": "CR-Fairmount",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Fitchburg",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Greenbush",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Haverhill",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Kingston",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Lowell",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Needham",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-NewBedford",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            },
+            {
+              "route_type": 2,
+              "route": "CR-Providence",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            }
+          ],
+          "last_push_notification_timestamp": "2026-10-23T11:49:09-04:00",
+          "lifecycle": "NEW",
+          "reminder_times": null,
+          "service_effect": null,
+          "severity": 3,
+          "short_header": "",
+          "timeframe": "through Sunday",
+          "updated_at": "2026-10-23T11:49:09-04:00",
+          "url": null
+        },
+        "id": "1038493",
+        "links": {
+          "self": "/alerts/1038493"
+        },
+        "type": "alert"
+      },
+      {
+        "attributes": {
+          "active_period": [
+            {
+              "end": null,
+              "start": "2026-09-03T16:19:00-04:00"
+            }
+          ],
+          "banner": null,
+          "cause": "UNKNOWN_CAUSE",
+          "closed_timestamp": null,
+          "created_at": "2026-09-03T16:19:07-04:00",
+          "description": null,
+          "duration_certainty": "UNKNOWN",
+          "effect": "STATION_ISSUE",
+          "header": "Synthetic test text: a station elevator is out of service.",
+          "image": null,
+          "image_alternative_text": null,
+          "informed_entity": [
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Fairmount",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Fairmount",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Franklin",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Franklin",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Greenbush",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Greenbush",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Kingston",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Kingston",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Needham",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Needham",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-NewBedford",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-NewBedford",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Providence",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Providence",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "NEC-2287",
+              "route_type": 2,
+              "route": "CR-Worcester",
+              "activities": ["BOARD"]
+            },
+            {
+              "stop": "place-sstat",
+              "route_type": 2,
+              "route": "CR-Worcester",
+              "activities": ["BOARD"]
+            }
+          ],
+          "last_push_notification_timestamp": "2026-09-03T16:19:05-04:00",
+          "lifecycle": "ONGOING",
+          "reminder_times": null,
+          "service_effect": null,
+          "severity": 1,
+          "short_header": "",
+          "timeframe": "ongoing",
+          "updated_at": "2026-10-06T09:48:33-04:00",
+          "url": null
+        },
+        "id": "1030825",
+        "links": {
+          "self": "/alerts/1030825"
+        },
+        "type": "alert"
+      },
+      {
+        "attributes": {
+          "active_period": [
+            {
+              "end": null,
+              "start": "2026-09-17T10:21:57-04:00"
+            }
+          ],
+          "banner": null,
+          "cause": "UNKNOWN_CAUSE",
+          "closed_timestamp": null,
+          "created_at": "2026-09-17T10:21:57-04:00",
+          "description": null,
+          "duration_certainty": "UNKNOWN",
+          "effect": "NOTICE",
+          "header": "Synthetic test text: a notice for the Fairmount Line.",
+          "image": null,
+          "image_alternative_text": null,
+          "informed_entity": [
+            {
+              "route_type": 2,
+              "route": "CR-Fairmount",
+              "activities": ["BOARD", "EXIT", "RIDE"]
+            }
+          ],
+          "last_push_notification_timestamp": "2026-09-17T10:21:57-04:00",
+          "lifecycle": "ONGOING",
+          "reminder_times": null,
+          "service_effect": null,
+          "severity": 1,
+          "short_header": "",
+          "timeframe": "ongoing",
+          "updated_at": "2026-09-17T10:21:57-04:00",
+          "url": null
+        },
+        "id": "1033315",
+        "links": {
+          "self": "/alerts/1033315"
+        },
+        "type": "alert"
+      }
+    ],
+    "jsonapi": {
+      "version": "1.0"
+    }
+  }
+}

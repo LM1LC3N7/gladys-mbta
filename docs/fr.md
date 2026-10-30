@@ -1,67 +1,134 @@
-# Template de démonstration
+# MBTA Boston
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Les **prochains départs** (métro, tramway, bus, train de banlieue,
+traversier) et les **alertes de service** à cinq arrêts au plus du MBTA
+(région de Boston), dans Gladys.
 
-## Ce que vous obtenez
+Cette intégration n'est pas officielle : elle n'est liée ni au MBTA ni au
+MassDOT, et ce n'est **pas une source officielle**. Vérifiez sur mbta.com ou
+aux arrêts avant de partir. Elle n'a jamais été testée sur une vraie
+installation de Gladys par son auteur ; elle a été vérifiée contre la vraie
+API du MBTA.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Démarrer en 3 étapes
 
-## Configuration
+Sans compte ni clé : il n'y a rien à créer.
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+1. **Trouvez l'identifiant de votre arrêt.** Ouvrez l'arrêt sur
+   [mbta.com](https://www.mbta.com/stops) : l'identifiant est la fin de
+   l'adresse de sa page. `mbta.com/stops/place-pktrm` est Park Street (une
+   station : tous ses quais), `mbta.com/stops/1` un arrêt de bus.
+2. **Installez l'intégration** depuis le catalogue, ouvrez sa configuration et
+   tapez l'identifiant dans **Arrêt 1 → Identifiant de l'arrêt**. Enregistrez.
+3. Ouvrez l'onglet **Découvrir** et appuyez sur **Ajouter** sur l'arrêt. Son
+   nom est le nom MBTA de l'arrêt (ex. « MBTA – Park Street ») une fois que
+   l'intégration l'a vérifié, ou le nom que vous avez tapé.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+Le message en haut de la page de configuration dit où en est chaque arrêt,
+par exemple « MBTA – Park Street : prochain dans 4 min (Red Line), 9 départ(s)
+dans les 60 min, lu 30 oct., 08 h 05 (heure de l'Est) ; 0 alerte(s)… ». Le
+bouton **Voir la dernière lecture** montre le même message ; il ne lit jamais
+le MBTA lui-même.
 
-## Actions
+### Choisir ce que vous voyez
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+| Champ                | Exemple       | Sens                                                                       |
+| -------------------- | ------------- | -------------------------------------------------------------------------- |
+| Identifiant          | `place-pktrm` | une station : tous ses quais                                               |
+| Identifiant          | `70075`       | un quai (ici Park Street, Red Line vers le sud)                            |
+| Seulement ces lignes | `Red`         | la Red Line seulement                                                      |
+| Seulement ces lignes | `1, 47`       | les bus 1 et 47 (identifiant de ligne ou numéro du bus)                    |
+| Direction            | `0` ou `1`    | 0 : sortante, vers le sud ou l'ouest ; 1 : entrante, vers le nord ou l'est |
+
+Chaque ligne du filtre doit desservir l'arrêt : l'intégration le vérifie une
+fois auprès du MBTA, et une ligne qui n'y passe pas est refusée (le statut la
+nomme), pour qu'un arrêt ou une ligne inconnus ne se lisent pas « aucun
+départ ».
+
+## Ce que contient chaque appareil
+
+- **Prochain départ** et **Départ suivant** : les minutes d'attente, comptées
+  sur l'heure du serveur du MBTA. 0 veut dire « part maintenant ».
+- **Départs prévus (60 min)** : combien de départs le MBTA prévoit à l'arrêt
+  dans l'heure qui vient.
+- **Départs** : un résumé qui commence par l'heure de lecture, par exemple
+  `08:05 · Red Line → Ashmont 4, 11 min · Red Line → Alewife 6 min`.
+- **Alertes en cours** : combien d'alertes du MBTA sont en vigueur maintenant
+  pour l'arrêt (et ses lignes et sa direction si vous les avez filtrées).
+- **Alerte** : le texte de la plus grave, ou « Aucune alerte ».
+
+Les noms d'arrêts et les textes d'alertes sont en anglais, seule langue de
+l'API du MBTA. Les noms d'appareils et le résumé suivent la langue choisie.
+
+## Ce que sont les nombres, et ce qu'ils ne sont pas
+
+- Les départs sont les **prévisions temps réel du MBTA**. Un trajet que le
+  MBTA ne suit pas encore n'est pas compté : un bus pas encore parti de son
+  terminus, un train de banlieue lointain. « Aucun départ prévu » ne veut pas
+  dire « pas de service » ; la nuit, c'est souvent la fin du service.
+- Quand aucun départ n'est prévu, le compteur montre 0 et le résumé le dit ;
+  les deux valeurs en minutes ne sont pas publiées et gardent leur dernière
+  valeur : l'heure de lecture en tête du résumé dit leur âge.
+- Un arrêt n'est compté à 0 qu'une fois l'arrêt (et les lignes du filtre)
+  confirmés par le MBTA. Avant, une réponse vide ne publie rien.
+- **Rien n'est publié** (ni 0, ni ancienne valeur renvoyée) quand une lecture
+  échoue, quand la réponse est illisible, quand elle n'a pas d'heure de
+  serveur utilisable, ou quand les données du MBTA derrière elle ont plus de
+  10 minutes (flux temps réel figé). La page de configuration le dit alors,
+  avec l'heure des dernières bonnes données.
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+**Déclencheur « Nouvelle alerte MBTA à un arrêt »** : une alerte en vigueur
+apparaît pour la première fois à un arrêt suivi, et elle a été créée, mise à
+jour ou a commencé dans les 2 dernières heures. Filtres : l'arrêt, l'effet
+(retard, navettes, suspension, détour, arrêt ou station fermés…) et la
+gravité (grave de 7 à 10, modérée de 4 à 6, mineure de 0 à 3). La première
+lecture d'un arrêt apprend seulement les alertes déjà là. La scène reçoit le
+texte de l'alerte, son effet, sa gravité, sa cause, sa période et son lien.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+Les valeurs des appareils servent aussi dans les scènes habituelles de
+Gladys, par exemple « quand le prochain départ du bus passe sous 6 minutes,
+allumer l'entrée ».
 
-## Tableau de bord
+## Rythme et courtoisie envers le MBTA
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Le MBTA permet 20 requêtes par minute sans clé. L'intégration envoie une
+requête à la fois, à 3 secondes d'écart au moins :
+
+- les départs de **tous** les arrêts en une requête, à l'intervalle choisi
+  (60 secondes par défaut, de 30 à 600) ;
+- les alertes toutes les 5 minutes, une requête par arrêt ;
+- la vérification des arrêts (nom, lignes) une fois, puis de nouveau
+  30 minutes plus tard pour un arrêt ou une ligne que le MBTA ne connaît pas
+  (1 minute après une vérification en échec, doublée à chaque fois,
+  30 minutes au plus).
+
+Quand le MBTA signale que sa limite est proche, la requête suivante attend la
+fin de la minute. Un « 429 » (trop de requêtes) met toutes les lectures en
+pause pour 2 minutes, doublées à chaque fois, ou jusqu'à la remise à zéro de
+la limite du MBTA si elle est plus tardive ; une erreur du serveur sur les
+départs met aussi les lectures en pause (1 minute, doublée à chaque fois). Une
+pause dure 6 heures au plus. Elle est gardée après un redémarrage, et un
+redémarrage attend l'intervalle après la dernière lecture (30 secondes après
+le démarrage quand `/data` ne dit pas quand elle a eu lieu). Un échec des alertes ou
+de la vérification des arrêts, sauf un 429, ne retient jamais les départs.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+| Message                                          | Que faire                                                                                       |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| « le MBTA ne connaît pas cet identifiant »       | Vérifiez l'identifiant à la fin de la page de l'arrêt sur mbta.com.                             |
+| « une ligne du filtre ne dessert pas cet arrêt » | Corrigez ou retirez la ligne nommée dans le message (identifiant de ligne ou numéro du bus).    |
+| « l'arrêt n'a pas encore pu être vérifié »       | Le MBTA n'a pas répondu à la vérification ; elle est retentée, les départs sont lus quand même. |
+| « flux figé »                                    | Les données temps réel du MBTA ne sont plus mises à jour ; rien n'est publié d'ici là.          |
+| « le MBTA demande de ralentir (429) »            | Un autre programme de votre réseau utilise peut-être l'API du MBTA ; la lecture reprend seule.  |
+| Un arrêt reste à « Aucun départ prévu »          | Normal la nuit, ou pour une ligne dont le prochain trajet n'est pas encore suivi.               |
+
+## Vie privée, données et licences
+
+- Sans compte, sans clé, sans position : seuls les identifiants d'arrêts que
+  vous tapez sont envoyés au MBTA, dans l'adresse des requêtes.
+- Données du MBTA (`api-v3.mbta.com`), utilisées selon le
+  [MassDOT Developers License Agreement](https://www.mass.gov/files/documents/2017/10/27/develop_license_agree_0.pdf).
+- Code de l'intégration : licence Apache 2.0.

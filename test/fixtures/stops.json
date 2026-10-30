@@ -1,0 +1,105 @@
+{
+  "source": "GET /stops?filter[id]=place-pktrm,1,bogus-xyz,70199 (sparse fields), captured 2026-10-30",
+  "date": "Fri, 30 Oct 2026 06:02:59 GMT",
+  "lastModified": "Thu, 29 Oct 2026 13:29:58 GMT",
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "description": null,
+          "location_type": 1,
+          "municipality": "Boston",
+          "name": "Park Street",
+          "platform_name": null,
+          "vehicle_type": null
+        },
+        "id": "place-pktrm",
+        "links": {
+          "self": "/stops/place-pktrm"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=place-pktrm"
+            }
+          },
+          "parent_station": {
+            "data": null
+          },
+          "zone": {
+            "data": null
+          }
+        },
+        "type": "stop"
+      },
+      {
+        "attributes": {
+          "description": null,
+          "location_type": 0,
+          "municipality": "Boston",
+          "name": "Washington St opp Ruggles St",
+          "platform_name": null,
+          "vehicle_type": 3
+        },
+        "id": "1",
+        "links": {
+          "self": "/stops/1"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=1"
+            }
+          },
+          "parent_station": {
+            "data": null
+          },
+          "zone": {
+            "data": {
+              "id": "ExpressBus-Downtown",
+              "type": "zone"
+            }
+          }
+        },
+        "type": "stop"
+      },
+      {
+        "attributes": {
+          "description": "Park Street - Green Line - (E) Heath Street",
+          "location_type": 0,
+          "municipality": "Boston",
+          "name": "Park Street",
+          "platform_name": "Heath Street",
+          "vehicle_type": 0
+        },
+        "id": "70199",
+        "links": {
+          "self": "/stops/70199"
+        },
+        "relationships": {
+          "facilities": {
+            "links": {
+              "related": "/facilities/?filter[stop]=70199"
+            }
+          },
+          "parent_station": {
+            "data": {
+              "id": "place-pktrm",
+              "type": "stop"
+            }
+          },
+          "zone": {
+            "data": {
+              "id": "RapidTransit",
+              "type": "zone"
+            }
+          }
+        },
+        "type": "stop"
+      }
+    ],
+    "jsonapi": {
+      "version": "1.0"
+    }
+  }
+}
