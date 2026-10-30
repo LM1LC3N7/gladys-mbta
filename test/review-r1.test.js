@@ -295,3 +295,61 @@ test('alert events are still told apart from departure events', async () => {
   await begin();
   assert.deepEqual(alertEvents(fake), []);
 });
+
+test('call(): one request at a time, and a pause found by the first holds the second', async () => {
+  const api = createApi(
+    (url, a) =>
+      new Promise((resolve) =>
+        a.clock.timers.setTimeout(() => resolve(errorAnswer(a, 429)), 5 * SECOND),
+      ),
+  );
+  const { app, wait } = await setup({ api });
+  app.load();
+  app.config = { refreshSeconds: 60, watches: [], language: 'en', errors: [] };
+  // The rounds are serialised, so this only happens through call() itself:
+  // the guard is the last one before a request leaves.
+  const first = app.call('https://api-v3.mbta.com/predictions?a', app.gen, { pausing: true });
+  const second = app.call('https://api-v3.mbta.com/predictions?b', app.gen, { pausing: true });
+  await wait(10 * SECOND);
+  const [a, b] = await Promise.all([first, second]);
+  assert.equal(a.kind, 'rate');
+  assert.deepEqual(b, { ok: false, kind: 'paused' });
+  assert.equal(api.calls.length, 1);
+  assert.equal(api.peak, 1);
+});
+
+test('after a round that found a pause, the status names the end of the pause as the next read', async () => {
+  const api = createApi((url, a) =>
+    url.includes('/predictions') ? errorAnswer(a, 503) : defaultWorld(url),
+  );
+  const { begin, fake } = await setup({ api, config: { ...HOME, refresh_seconds: 30 } });
+  await begin();
+  // 503 at 3 s: paused until 63 s (02:04:11), later than the interval (02:03:38).
+  assert.match(statusEn(fake), /Next read Oct 30, 02:04 ET\./);
+});
+
+test('a round longer than the interval delays the next one, never two rounds at once', async () => {
+  // Gladys never answers: each call is cut at 10 s, a round of 2 stops lasts
+  // longer than the 30 s interval.
+  const { app, gladys, api, wait } = await setup({
+    config: { ...HOME, watch2_stop: '1', refresh_seconds: 30 },
+  });
+  gladys.publishStates = () => new Promise(() => {});
+  gladys.setConnectionStatus = () => new Promise(() => {});
+  let running = 0;
+  let peak = 0;
+  const round = app.round.bind(app);
+  app.round = async (gen) => {
+    running += 1;
+    peak = Math.max(peak, running);
+    try {
+      return await round(gen);
+    } finally {
+      running -= 1;
+    }
+  };
+  app.start({ ...HOME, watch2_stop: '1', refresh_seconds: 30 });
+  for (let i = 0; i < 240; i += 1) await wait(SECOND);
+  assert.equal(peak, 1);
+  assert.ok(api.count('predictions') >= 3, `${api.count('predictions')} rounds`);
+});

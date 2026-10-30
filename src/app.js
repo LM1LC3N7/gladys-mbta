@@ -1011,10 +1011,9 @@ export class MbtaApp {
         continue;
       }
       // Read even when the stop check failed (it never holds the alerts), but
-      // "no alert" is only told for a stop the MBTA confirmed: read again at
-      // the next round until it is.
+      // "no alert" is only told for a stop the MBTA confirmed: not marked as
+      // read, so read again at the next round until it is.
       if (read.alerts.length === 0 && !this.checked(watch)) {
-        this.alertsDue.delete(watch.slot);
         this.recordFailure(watch, 'alerts', { kind: 'alerts_unchecked' });
         continue;
       }

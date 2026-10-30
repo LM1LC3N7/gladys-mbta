@@ -479,6 +479,8 @@ test('If-Modified-Since: a 304 reuses the answer, judged on its Last-Modified', 
   const second = api.calls.filter((c) => c.kind === 'predictions')[1];
   assert.ok(second.init.headers['If-Modified-Since']);
   assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), [7, 7]);
+  // The minutes are counted again on the Date of the 304: one minute less.
+  assert.deepEqual(published(fake, N(FEATURES.NEXT)).map(minutesOf), [13, 12]);
   // 304 after 304: the data behind them (first answer at 3 s) passes 10 minutes
   // old at the round of 660 s.
   await wait(11 * MINUTE);

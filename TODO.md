@@ -90,8 +90,10 @@
   (the empty fields arrive as `null`): Discovery (2 devices, 6 features each), status and test button OK; the
   sandbox integration was stopped afterwards so it does not keep polling the MBTA. Device creation from the
   Discovery tab was not tried there.
-- **Mutation** (120 mutants of the guards at milestone 1; the 5 real survivors of review r1 killed by
-  `test/review-r1.test.js`): equivalent ones, guards kept: the 1-minute floor of a pause (every first pause is 1
-  minute or more), the explicit `null` test of `Last-Modified` (a null compares as stale anyway), the explicit "no
-  departure time" skip (a null time falls in the "already left" test), and those of the reviewer (P10, P12, P23,
-  L2).
+- **Mutation** (120 mutants of the guards at milestone 1; after review r1 the reviewer's 105 and 19 more on the
+  new code, one at a time): all killed but equivalent ones, guards kept: the 1-minute floor of a pause (every
+  first pause is 1 minute or more), the explicit `null` test of `Last-Modified` (a null compares as stale
+  anyway), the explicit "no departure time" skip (a null time falls in the "already left" test), the explicit
+  "departure not seen before" skip of the approaching trigger (`undefined > n` is false), the arming of the next
+  round at its start and again at its end (each alone keeps the period, the Gladys calls being bounded), and the
+  reviewer's P10, P12, P23, L2 and L14 (guards doubled).
