@@ -23,10 +23,18 @@ No account and no key: there is nothing to create.
    MBTA name of the stop (e.g. "MBTA – Park Street") once the integration has
    checked it, or the name you typed.
 
+**One device per stop.** A device belongs to a slot and to its stop. If you
+type another stop in a slot, the integration offers a new device in the
+Discover tab: the device of the old stop is no longer updated and keeps its
+last values; the configuration page lists it under "Not updated any more",
+delete it in Gladys. Changing the routes or the direction keeps the device.
+
 The message at the top of the configuration page tells where each stop
 stands, e.g. "MBTA – Park Street: next in 4 min (Red Line), 9 departure(s)
 within 60 min, read Oct 30, 08:05 ET; 0 alert(s), read Oct 30, 08:05 ET."
-The **Show the last read** button shows the same message; it never reads the
+The read times come from the MBTA server; the next read and the end of a
+pause from the clock of the machine that runs Gladys. The **Show the last
+read** button shows the same message; it never reads the
 MBTA itself.
 
 ### Choosing what you see
@@ -46,8 +54,13 @@ departure".
 
 ## What each device holds
 
-- **Next departure** and **Following departure**: the minutes to wait, counted
-  against the time of the MBTA server. 0 means "leaving now".
+- **Next departure** and **Following departure**: texts with the route, the
+  destination, the minutes to wait (counted against the time of the MBTA
+  server) and the departure time, e.g. `Red Line → Ashmont in 4 min (08:09)`.
+  When there is none, they say so with the time of the read: `No predicted
+departure (read 08:05)`, `No following departure (read 08:05)`. They are
+  texts so that a departure that no longer exists is never left on the
+  dashboard as a number: Gladys cannot clear a number.
 - **Predicted departures (60 min)**: how many departures the MBTA predicts at
   the stop within the next hour.
 - **Departures**: a summary that starts with the time of the read, e.g.
@@ -66,29 +79,41 @@ API. The device names and the summary follow the language you choose.
   not track yet is not counted: a bus that has not left its terminal, a
   commuter rail train far ahead. "No predicted departure" does not mean "no
   service"; at night it often means the service has ended.
-- When no departure is predicted, the counter shows 0 and the summary says
-  so; the two minute values are not published and keep their last value: the
-  read time at the start of the summary tells how old they are.
+- When no departure is predicted, the counter shows 0 and the three texts
+  say so. Every read publishes every value again.
+- When a read fails, nothing is published: the values of the last good read
+  stay in Gladys. Each text carries its time (the departure time, or the read
+  time), and the configuration page says the data is stale after 3 intervals
+  (5 minutes at least).
 - A stop is counted at 0 only when the MBTA has confirmed the stop (and the
   routes of the filter). Until then an empty answer publishes nothing.
 - **Nothing is published** (no 0, no old value sent again) when a read fails,
-  when the answer cannot be read, when it carries no usable server time, or
-  when the MBTA data behind it is more than 10 minutes old (a frozen
-  real-time feed). The configuration page then says so, with the time of the
+  when the answer cannot be read, when it carries no usable server time, when
+  that time differs by more than 5 minutes from the clock of the machine (a
+  wrong clock, or an old copy served by a cache), or when the MBTA data
+  behind it is more than 10 minutes old (a frozen real-time feed). The configuration page then says so, with the time of the
   last good data.
 
 ## Scenes
 
+**Trigger "MBTA departure approaching"**: a predicted departure at a watched
+stop gets to 1, 2, 3, 5, 10 or 15 minutes or less (you choose), between two
+reads: it was further at the read before. A departure that appears already
+that close (the first read after a start, a bus that just left its
+terminal) is not announced. Example: "when a bus of stop 1 is 5 minutes
+away, turn the hall light on". The scene gets the minutes, the route, the
+destination and the departure time.
+
 **Trigger "New MBTA alert at a stop"**: an alert in effect appears at a
 watched stop for the first time, and it was created, updated or started
-within the last 2 hours. Filter on the stop, the effect (delay, shuttle,
+within the last 2 hours. Filter on the stop (required), the effect (delay, shuttle,
 suspension, detour, stop or station closed…) and the severity (severe 7 to
 10, moderate 4 to 6, minor 0 to 3). The first read of a stop only learns the
 alerts already there. The scene gets the alert text, its effect, severity,
 cause, timeframe and link.
 
-The device values work in the usual scenes of Gladys too, e.g. "when the next
-departure of the bus stop goes under 6 minutes, turn the hall light on".
+The counters work in the usual scenes of Gladys too, e.g. "if the predicted
+departures of the stop are 0, send me a message".
 
 ## Pace and courtesy toward the MBTA
 
@@ -109,23 +134,27 @@ error on the departures pauses the reads too (1 minute, doubled each time).
 A pause lasts 6 hours at most. The pause is kept across a
 restart, and a restart waits for the interval after the last read (30 seconds
 after the start when `/data` cannot tell when that was). A failure of the
-alerts or of the stop check, other than a 429, never holds the departures.
+alerts or of the stop check, other than a 429, never holds the departures,
+and a failed stop check never holds the alerts.
 
 ## Troubleshooting
 
-| Message                                            | What to do                                                                                   |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| "the MBTA does not know this stop id"              | Check the id at the end of the stop page on mbta.com.                                        |
-| "a route of the filter does not call at this stop" | Fix or remove the route named in the message (use the route id or the bus number).           |
-| "the stop could not be checked yet"                | The MBTA was not reachable for the check; it is tried again, the departures are read anyway. |
-| "frozen feed"                                      | The MBTA real-time data is not updated; nothing is published until it is.                    |
-| "MBTA asked to slow down (429)"                    | Another program on your network may use the MBTA API too; the reads resume by themselves.    |
-| A stop stays at "No predicted departure"           | Normal at night, or for a route whose next trip is not tracked yet.                          |
+| Message                                            | What to do                                                                                    |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| "the MBTA does not know this stop id"              | Check the id at the end of the stop page on mbta.com.                                         |
+| "a route of the filter does not call at this stop" | Fix or remove the route named in the message (use the route id or the bus number).            |
+| "the stop could not be checked yet"                | The MBTA was not reachable for the check; it is tried again, the departures are read anyway.  |
+| "differs from the clock of this machine"           | Set the clock of the machine running Gladys (automatic time); the reads resume by themselves. |
+| "Not updated any more … delete in Gladys"          | A slot was given another stop: delete the old device in Gladys.                               |
+| "frozen feed"                                      | The MBTA real-time data is not updated; nothing is published until it is.                     |
+| "MBTA asked to slow down (429)"                    | Another program on your network may use the MBTA API too; the reads resume by themselves.     |
+| A stop stays at "No predicted departure"           | Normal at night, or for a route whose next trip is not tracked yet.                           |
 
 ## Privacy, data and licences
 
 - No account, no key, no location: only the stop ids you type are sent to
   the MBTA, in the address of the requests.
-- MBTA data (`api-v3.mbta.com`), used under the
-  [MassDOT Developers License Agreement](https://www.mass.gov/files/documents/2017/10/27/develop_license_agree_0.pdf).
+- Data: MassDOT / MBTA (`api-v3.mbta.com`), used under the
+  [MassDOT Developers License Agreement](https://cdn.mbta.com/sites/default/files/2023-08/mbta-massdot-develop-license-agreement.pdf). MassDOT makes no warranty
+  on the data, nor does this integration.
 - Integration code: Apache 2.0 licence.

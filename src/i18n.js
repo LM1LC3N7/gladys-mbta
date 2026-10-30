@@ -13,6 +13,10 @@ const TEXTS = {
     noDeparture: 'No predicted departure',
     nextIn: ({ label, minutes }) => `next: ${label} in ${minutes} min`,
     noAlert: 'No alert',
+    noNext: ({ clock }) => `No predicted departure (read ${clock})`,
+    noSecond: ({ clock }) => `No following departure (read ${clock})`,
+    departsIn: ({ label, minutes, clock }) => `${label} in ${minutes} min (${clock})`,
+    leavingNow: ({ label, clock }) => `${label} leaving now (${clock})`,
     moreAlerts: ({ count }) => (count === 1 ? '1 more alert' : `${count} more alerts`),
     watchDefault: ({ stop }) => `MBTA stop ${stop}`,
     watchNamed: ({ name }) => `MBTA – ${name}`,
@@ -27,6 +31,10 @@ const TEXTS = {
     noDeparture: 'Aucun départ prévu',
     nextIn: ({ label, minutes }) => `prochain : ${label} dans ${minutes} min`,
     noAlert: 'Aucune alerte',
+    noNext: ({ clock }) => `Aucun départ prévu (lu à ${clock})`,
+    noSecond: ({ clock }) => `Aucun départ suivant (lu à ${clock})`,
+    departsIn: ({ label, minutes, clock }) => `${label} dans ${minutes} min (${clock})`,
+    leavingNow: ({ label, clock }) => `${label} part maintenant (${clock})`,
     moreAlerts: ({ count }) => (count === 1 ? '1 autre alerte' : `${count} autres alertes`),
     watchDefault: ({ stop }) => `Arrêt MBTA ${stop}`,
     watchNamed: ({ name }) => `MBTA – ${name}`,
@@ -160,6 +168,14 @@ const FAILURES = {
   stop_unchecked: {
     en: 'no departure, and the stop could not be checked yet: nothing published',
     fr: "aucun départ, et l'arrêt n'a pas encore pu être vérifié : rien publié",
+  },
+  alerts_unchecked: {
+    en: 'no alert, and the stop could not be checked yet: nothing published',
+    fr: "aucune alerte, et l'arrêt n'a pas encore pu être vérifié : rien publié",
+  },
+  clock: {
+    en: 'the time of the MBTA answer differs from the clock of this machine (set the clock of the machine, or a cache serves an old answer): nothing published',
+    fr: "l'heure de la réponse du MBTA diffère de l'horloge de cette machine (réglez l'horloge de la machine, ou un cache sert une vieille réponse) : rien publié",
   },
   route_missing: {
     en: 'a route of the filter does not call at this stop: check the routes',

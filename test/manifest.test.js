@@ -17,6 +17,8 @@ import {
   REFRESH_MIN,
   SCENE_TRIGGER,
   SEVERITY_BANDS,
+  SOON_THRESHOLDS,
+  SOON_TRIGGER,
   WATCH_SLOTS,
 } from '../src/constants.js';
 import { LANGUAGES, normalizeConfig, watchKeys } from '../src/config.js';
@@ -150,7 +152,20 @@ test('actions, scene trigger and handlers agree; read-only', () => {
   assert.ok(!index.includes('onSetValue'), 'no command: read-only');
   assert.deepEqual(
     manifest.scene_triggers.map((s) => s.key),
-    [SCENE_TRIGGER],
+    [SCENE_TRIGGER, SOON_TRIGGER],
+  );
+  // A scene without a stop would fire for every stop: the stop is required.
+  for (const t of manifest.scene_triggers) {
+    const device = t.fields.find((f) => f.key === 'device');
+    assert.equal(device.required, true, t.key);
+    assert.equal(device.source, 'devices');
+  }
+  const soon = manifest.scene_triggers[1];
+  const threshold = soon.fields.find((f) => f.key === 'threshold');
+  assert.equal(threshold.required, true);
+  assert.deepEqual(
+    threshold.options.map((o) => o.value),
+    SOON_THRESHOLDS.map(String),
   );
   const trigger = manifest.scene_triggers[0];
   const options = (key) => trigger.fields.find((f) => f.key === key).options.map((o) => o.value);
@@ -167,12 +182,45 @@ test('actions, scene trigger and handlers agree; read-only', () => {
   }
 });
 
+test('the data of the departure trigger is declared, flat, bounded', async () => {
+  const soon = manifest.scene_triggers[1];
+  const declared = new Set([...soon.fields, ...soon.variables].map((f) => f.key));
+  const { MbtaApp } = await import('../src/app.js');
+  const app = new MbtaApp({
+    gladys: createFakeGladys({ selector: 'mbta' }),
+    store: { load: () => ({ status: 'absent', data: {} }), save: async () => {} },
+  });
+  app.load();
+  const watch = { slot: 1, stop: '1', routes: [], direction: null };
+  const d = (minutes) => ({
+    id: 'p1',
+    minutes,
+    at: Date.parse('2026-10-30T12:00:00Z'),
+    route: '1',
+    label: '1',
+    headsign: 'Harvard',
+  });
+  app.departuresSoon(watch, [d(7)]);
+  const [event] = app.departuresSoon(watch, [d(4)]);
+  const data = { device: 'ext:mbta:watch:1-1', ...event };
+  for (const key of Object.keys(data)) assert.ok(declared.has(key), key);
+  assert.deepEqual(data, {
+    device: 'ext:mbta:watch:1-1',
+    threshold: '5',
+    minutes: 4,
+    route: '1',
+    route_id: '1',
+    headsign: 'Harvard',
+    departure_time: '08:00',
+  });
+});
+
 test('the scene data keys are declared (variables and fields), at most 30', async () => {
   const { sceneData } = await import('../src/app.js');
   const { readAlert } = await import('../src/mbta.js');
   const { alertResource } = await import('./helpers/setup.js');
   for (const over of [{}, { severity: null, url: 'https://www.mbta.com/x', description: 'd' }]) {
-    const data = sceneData('ext:mbta:watch:1', readAlert(alertResource('x', over)));
+    const data = sceneData('ext:mbta:watch:1-place-pktrm', readAlert(alertResource('x', over)));
     const trigger = manifest.scene_triggers[0];
     const declared = new Set([...trigger.fields, ...trigger.variables].map((f) => f.key));
     for (const key of Object.keys(data)) assert.ok(declared.has(key), key);
@@ -232,6 +280,21 @@ test('the licenses ship in the image; no name in LICENSE', () => {
   const notices = read('THIRD_PARTY_NOTICES.md');
   assert.match(notices, /MassDOT Developers License Agreement/);
   assert.match(notices, /MBTA/);
+});
+
+test('MassDOT is acknowledged as the provider (§4.1); the fixtures are not under Apache', () => {
+  const intro = manifest.config_schema.find((f) => f.key === 'intro');
+  assert.match(intro.description.en, /Data: MassDOT \/ MBTA/);
+  assert.match(intro.description.fr, /Données : MassDOT \/ MBTA/);
+  assert.ok(
+    intro.links.some((l) => l.url.startsWith('https://cdn.mbta.com/') && l.url.endsWith('.pdf')),
+  );
+  for (const file of ['README.md', 'docs/en.md', 'THIRD_PARTY_NOTICES.md']) {
+    assert.match(read(file), /Data: MassDOT \/ MBTA/, file);
+    assert.doesNotMatch(read(file), /mass\.gov/, file);
+  }
+  assert.match(read('docs/fr.md'), /Données : MassDOT \/ MBTA/);
+  assert.match(read('THIRD_PARTY_NOTICES.md'), /not covered by the Apache License/);
 });
 
 test('the docs say what the data is not', () => {

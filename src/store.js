@@ -1,11 +1,12 @@
 // -----------------------------------------------------------------------------
 // The state kept in /data (the only writable place of the container): the
 // time of the last read attempt (a restart never reads sooner than the
-// interval), the pause DriveBC asked for, and per zone the ids of the events
-// already seen (the scene trigger fires for new ones only) with a salted
-// fingerprint of the zone (a moved zone starts a new baseline). A small JSON
-// file written through a temporary file and a rename, one save after the
-// other.
+// interval), the pause the MBTA asked for, and per watched stop the ids of
+// the alerts already seen (the scene trigger fires for new ones only) with a
+// salted fingerprint of the watch (a changed stop starts a new baseline). A
+// small JSON file (1 MB at most) written through a temporary file and a
+// rename, one save after the other. Read synchronously at start: /data is a
+// plain volume of the container.
 //
 // A file that exists but cannot be read is not an empty one: it is never
 // overwritten (the app runs from memory and says so in its status).

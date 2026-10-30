@@ -105,6 +105,22 @@ export function summary(departures, at, language) {
   return bound(`${head} · ${parts.join(' · ')}`, SUMMARY_MAX);
 }
 
+/**
+ * The text of the next or the following departure, with its clock time (in
+ * Eastern time, from the server) so that a text left behind by a failed read
+ * still tells the truth: `"Red Line → Ashmont in 4 min (08:09)"`. Without
+ * that departure: `"No following departure (read 08:05)"`, never a number.
+ */
+export function departureText(d, at, language, which = 'next') {
+  if (!d) {
+    return t(language, which === 'next' ? 'noNext' : 'noSecond', { clock: formatClock(at) });
+  }
+  const label = groupLabel(d);
+  return d.minutes === 0
+    ? t(language, 'leavingNow', { label, clock: formatClock(d.at) })
+    : t(language, 'departsIn', { label, minutes: d.minutes, clock: formatClock(d.at) });
+}
+
 const groupLabel = (d) => (d.headsign ? `${d.label} → ${d.headsign}` : d.label);
 
 /** The alerts sorted: most severe first, then the most recently updated. */

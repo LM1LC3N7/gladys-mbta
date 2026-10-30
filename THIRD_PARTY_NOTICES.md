@@ -1,15 +1,18 @@
 # Third-party notices
 
-## MBTA data (Massachusetts Bay Transportation Authority)
+## MBTA data (MassDOT / Massachusetts Bay Transportation Authority)
 
-The integration reads, at run time, the MBTA V3 API (https://api-v3.mbta.com/). The use of MBTA data is governed
-by the MassDOT Developers License Agreement
-(https://www.mass.gov/files/documents/2017/10/27/develop_license_agree_0.pdf), as stated on
-https://www.mbta.com/developers. Each user of the integration reads the API from their own Gladys.
+Data: MassDOT / MBTA. The integration reads, at run time, the MBTA V3 API (https://api-v3.mbta.com/). The use of
+MBTA data is governed by the MassDOT Developers License Agreement (https://cdn.mbta.com/sites/default/files/2023-08/mbta-massdot-develop-license-agreement.pdf, linked from
+https://www.mbta.com/developers): a non-exclusive, limited and revocable right to use, reproduce and redistribute
+the data (§3.1), with MassDOT clearly acknowledged as the provider, no warranty given to third parties on the
+data, and no MassDOT or MBTA logo (§4.1). MassDOT may change or end the agreement, the data and the service
+without notice (§5). Each user of the integration reads the API from their own Gladys.
 
 The test fixtures in `test/fixtures/` are trimmed copies of answers of that API captured on 2026-10-30 (stop,
-route and prediction resources; the alert texts were replaced by synthetic texts). They serve the tests only and
-are not shipped in the Docker image.
+route and prediction resources; the alert texts were replaced by synthetic texts). They are MassDOT / MBTA data,
+**not covered by the Apache License** of this repository, and redistributed under the agreement above (revocable
+without notice). They serve the tests only and are not shipped in the Docker image.
 
 No code of the MBTA is used: the client is written from the API documentation
 (https://api-v3.mbta.com/docs/swagger) and the observed answers. The integration is not endorsed by the MBTA nor

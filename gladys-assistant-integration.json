@@ -21,8 +21,8 @@
         "fr": "Départs et alertes du MBTA"
       },
       "description": {
-        "en": "The next departures (subway, light rail, bus, commuter rail, ferry) and the service alerts at up to five stops of the MBTA (Boston area), read from the public MBTA V3 API: no account, no key. Each stop is a device. The departures are the MBTA real-time predictions: a trip that is not tracked yet is not counted. Data in English only. Check mbta.com before you travel: this integration is not an official source.",
-        "fr": "Les prochains départs (métro, tramway, bus, train de banlieue, traversier) et les alertes de service à cinq arrêts au plus du MBTA (région de Boston), lus sur l'API publique MBTA V3 : sans compte ni clé. Chaque arrêt est un appareil. Les départs sont les prévisions temps réel du MBTA : un trajet pas encore suivi n'est pas compté. Données en anglais seulement. Vérifiez sur mbta.com avant de partir : cette intégration n'est pas une source officielle."
+        "en": "The next departures (subway, light rail, bus, commuter rail, ferry) and the service alerts at up to five stops of the MBTA (Boston area), read from the public MBTA V3 API: no account, no key. Each stop is a device. The departures are the MBTA real-time predictions: a trip that is not tracked yet is not counted. Data: MassDOT / MBTA, in English only, under the MassDOT Developers License Agreement. Check mbta.com before you travel: this integration is not an official source.",
+        "fr": "Les prochains départs (métro, tramway, bus, train de banlieue, traversier) et les alertes de service à cinq arrêts au plus du MBTA (région de Boston), lus sur l'API publique MBTA V3 : sans compte ni clé. Chaque arrêt est un appareil. Les départs sont les prévisions temps réel du MBTA : un trajet pas encore suivi n'est pas compté. Données : MassDOT / MBTA, en anglais seulement, selon le MassDOT Developers License Agreement. Vérifiez sur mbta.com avant de partir : cette intégration n'est pas une source officielle."
       },
       "links": [
         {
@@ -37,6 +37,13 @@
           "label": {
             "en": "MBTA V3 API",
             "fr": "API MBTA V3"
+          }
+        },
+        {
+          "url": "https://cdn.mbta.com/sites/default/files/2023-08/mbta-massdot-develop-license-agreement.pdf",
+          "label": {
+            "en": "MassDOT Developers License Agreement",
+            "fr": "MassDOT Developers License Agreement"
           }
         }
       ]
@@ -617,7 +624,8 @@
           "label": {
             "en": "Stop",
             "fr": "Arrêt"
-          }
+          },
+          "required": true
         },
         {
           "key": "effect",
@@ -831,6 +839,132 @@
           "label": {
             "en": "MBTA alert id",
             "fr": "Identifiant MBTA de l'alerte"
+          }
+        }
+      ]
+    },
+    {
+      "key": "departure_soon",
+      "label": {
+        "en": "MBTA departure approaching",
+        "fr": "Départ MBTA imminent"
+      },
+      "description": {
+        "en": "A predicted departure at a watched stop gets to the chosen number of minutes or less, between two reads (it was further at the read before). A departure that appears already that close is not announced.",
+        "fr": "Un départ prévu à un arrêt suivi passe au nombre de minutes choisi ou moins, entre deux lectures (il était plus loin à la lecture d'avant). Un départ qui apparaît déjà aussi proche n'est pas annoncé."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Stop",
+            "fr": "Arrêt"
+          }
+        },
+        {
+          "key": "threshold",
+          "type": "select",
+          "required": true,
+          "label": {
+            "en": "Minutes or less",
+            "fr": "Minutes ou moins"
+          },
+          "options": [
+            {
+              "value": "1",
+              "label": {
+                "en": "1 min",
+                "fr": "1 min"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "en": "2 min",
+                "fr": "2 min"
+              }
+            },
+            {
+              "value": "3",
+              "label": {
+                "en": "3 min",
+                "fr": "3 min"
+              }
+            },
+            {
+              "value": "5",
+              "label": {
+                "en": "5 min",
+                "fr": "5 min"
+              }
+            },
+            {
+              "value": "10",
+              "label": {
+                "en": "10 min",
+                "fr": "10 min"
+              }
+            },
+            {
+              "value": "15",
+              "label": {
+                "en": "15 min",
+                "fr": "15 min"
+              }
+            }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes to wait",
+            "fr": "Minutes d'attente"
+          }
+        },
+        {
+          "key": "route",
+          "type": "string",
+          "label": {
+            "en": "Route",
+            "fr": "Ligne"
+          }
+        },
+        {
+          "key": "route_id",
+          "type": "string",
+          "label": {
+            "en": "MBTA route id",
+            "fr": "Identifiant MBTA de la ligne"
+          }
+        },
+        {
+          "key": "headsign",
+          "type": "string",
+          "label": {
+            "en": "Destination",
+            "fr": "Destination"
+          }
+        },
+        {
+          "key": "departure_time",
+          "type": "string",
+          "label": {
+            "en": "Departure time (Eastern time)",
+            "fr": "Heure de départ (heure de l'Est)"
+          }
+        },
+        {
+          "key": "threshold",
+          "type": "string",
+          "label": {
+            "en": "Threshold (minutes)",
+            "fr": "Seuil (minutes)"
           }
         }
       ]

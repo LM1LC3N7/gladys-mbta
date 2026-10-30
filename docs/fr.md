@@ -24,11 +24,20 @@ Sans compte ni clé : il n'y a rien à créer.
    nom est le nom MBTA de l'arrêt (ex. « MBTA – Park Street ») une fois que
    l'intégration l'a vérifié, ou le nom que vous avez tapé.
 
+**Un appareil par arrêt.** Un appareil appartient à un emplacement et à son
+arrêt. Si vous tapez un autre arrêt dans un emplacement, l'intégration
+propose un nouvel appareil dans l'onglet Découvrir : l'appareil de l'ancien
+arrêt n'est plus mis à jour et garde ses dernières valeurs ; la page de
+configuration le cite sous « Plus mis à jour », supprimez-le dans Gladys.
+Changer les lignes ou la direction garde l'appareil.
+
 Le message en haut de la page de configuration dit où en est chaque arrêt,
 par exemple « MBTA – Park Street : prochain dans 4 min (Red Line), 9 départ(s)
 dans les 60 min, lu 30 oct., 08 h 05 (heure de l'Est) ; 0 alerte(s)… ». Le
 bouton **Voir la dernière lecture** montre le même message ; il ne lit jamais
-le MBTA lui-même.
+le MBTA lui-même. Les heures de lecture viennent du serveur du MBTA ; la
+prochaine lecture et la fin d'une pause, de l'horloge de la machine de
+Gladys.
 
 ### Choisir ce que vous voyez
 
@@ -47,8 +56,13 @@ départ ».
 
 ## Ce que contient chaque appareil
 
-- **Prochain départ** et **Départ suivant** : les minutes d'attente, comptées
-  sur l'heure du serveur du MBTA. 0 veut dire « part maintenant ».
+- **Prochain départ** et **Départ suivant** : des textes avec la ligne, la
+  destination, les minutes d'attente (comptées sur l'heure du serveur du
+  MBTA) et l'heure de départ, par exemple `Red Line → Ashmont dans 4 min
+(08:09)`. Sans départ, ils le disent avec l'heure de lecture : `Aucun départ
+prévu (lu à 08:05)`, `Aucun départ suivant (lu à 08:05)`. Ce sont des textes
+  pour qu'un départ qui n'existe plus ne reste jamais affiché comme un
+  nombre : Gladys ne sait pas effacer un nombre.
 - **Départs prévus (60 min)** : combien de départs le MBTA prévoit à l'arrêt
   dans l'heure qui vient.
 - **Départs** : un résumé qui commence par l'heure de lecture, par exemple
@@ -66,30 +80,42 @@ l'API du MBTA. Les noms d'appareils et le résumé suivent la langue choisie.
   MBTA ne suit pas encore n'est pas compté : un bus pas encore parti de son
   terminus, un train de banlieue lointain. « Aucun départ prévu » ne veut pas
   dire « pas de service » ; la nuit, c'est souvent la fin du service.
-- Quand aucun départ n'est prévu, le compteur montre 0 et le résumé le dit ;
-  les deux valeurs en minutes ne sont pas publiées et gardent leur dernière
-  valeur : l'heure de lecture en tête du résumé dit leur âge.
+- Quand aucun départ n'est prévu, le compteur montre 0 et les trois textes
+  le disent. Chaque lecture republie toutes les valeurs.
+- Quand une lecture échoue, rien n'est publié : les valeurs de la dernière
+  bonne lecture restent dans Gladys. Chaque texte porte son heure (de départ
+  ou de lecture), et la page de configuration dit les données périmées après
+  3 intervalles (5 minutes au moins).
 - Un arrêt n'est compté à 0 qu'une fois l'arrêt (et les lignes du filtre)
   confirmés par le MBTA. Avant, une réponse vide ne publie rien.
 - **Rien n'est publié** (ni 0, ni ancienne valeur renvoyée) quand une lecture
   échoue, quand la réponse est illisible, quand elle n'a pas d'heure de
-  serveur utilisable, ou quand les données du MBTA derrière elle ont plus de
-  10 minutes (flux temps réel figé). La page de configuration le dit alors,
+  serveur utilisable, quand cette heure diffère de plus de 5 minutes de
+  l'horloge de la machine (horloge fausse, ou vieille copie servie par un
+  cache), ou quand les données du MBTA derrière elle ont plus de 10 minutes
+  (flux temps réel figé). La page de configuration le dit alors,
   avec l'heure des dernières bonnes données.
 
 ## Scènes
 
+**Déclencheur « Départ MBTA imminent »** : un départ prévu à un arrêt suivi
+passe à 1, 2, 3, 5, 10 ou 15 minutes ou moins (au choix), entre deux
+lectures : il était plus loin à la lecture d'avant. Un départ qui apparaît
+déjà aussi proche (première lecture après un démarrage, bus qui vient de
+quitter son terminus) n'est pas annoncé. Exemple : « quand un bus de l'arrêt
+1 est à 5 minutes, allumer l'entrée ». La scène reçoit les minutes, la ligne,
+la destination et l'heure de départ.
+
 **Déclencheur « Nouvelle alerte MBTA à un arrêt »** : une alerte en vigueur
 apparaît pour la première fois à un arrêt suivi, et elle a été créée, mise à
-jour ou a commencé dans les 2 dernières heures. Filtres : l'arrêt, l'effet
+jour ou a commencé dans les 2 dernières heures. Filtres : l'arrêt (obligatoire), l'effet
 (retard, navettes, suspension, détour, arrêt ou station fermés…) et la
 gravité (grave de 7 à 10, modérée de 4 à 6, mineure de 0 à 3). La première
 lecture d'un arrêt apprend seulement les alertes déjà là. La scène reçoit le
 texte de l'alerte, son effet, sa gravité, sa cause, sa période et son lien.
 
-Les valeurs des appareils servent aussi dans les scènes habituelles de
-Gladys, par exemple « quand le prochain départ du bus passe sous 6 minutes,
-allumer l'entrée ».
+Les compteurs servent aussi dans les scènes habituelles de Gladys, par
+exemple « si les départs prévus de l'arrêt valent 0, m'envoyer un message ».
 
 ## Rythme et courtoisie envers le MBTA
 
@@ -112,7 +138,8 @@ départs met aussi les lectures en pause (1 minute, doublée à chaque fois). Un
 pause dure 6 heures au plus. Elle est gardée après un redémarrage, et un
 redémarrage attend l'intervalle après la dernière lecture (30 secondes après
 le démarrage quand `/data` ne dit pas quand elle a eu lieu). Un échec des alertes ou
-de la vérification des arrêts, sauf un 429, ne retient jamais les départs.
+de la vérification des arrêts, sauf un 429, ne retient jamais les départs,
+et une vérification des arrêts en échec ne retient jamais les alertes.
 
 ## Dépannage
 
@@ -121,6 +148,8 @@ de la vérification des arrêts, sauf un 429, ne retient jamais les départs.
 | « le MBTA ne connaît pas cet identifiant »       | Vérifiez l'identifiant à la fin de la page de l'arrêt sur mbta.com.                             |
 | « une ligne du filtre ne dessert pas cet arrêt » | Corrigez ou retirez la ligne nommée dans le message (identifiant de ligne ou numéro du bus).    |
 | « l'arrêt n'a pas encore pu être vérifié »       | Le MBTA n'a pas répondu à la vérification ; elle est retentée, les départs sont lus quand même. |
+| « diffère de l'horloge de cette machine »        | Réglez l'horloge de la machine de Gladys (heure automatique) ; la lecture reprend seule.        |
+| « Plus mis à jour … à supprimer dans Gladys »    | Un emplacement a reçu un autre arrêt : supprimez l'ancien appareil dans Gladys.                 |
 | « flux figé »                                    | Les données temps réel du MBTA ne sont plus mises à jour ; rien n'est publié d'ici là.          |
 | « le MBTA demande de ralentir (429) »            | Un autre programme de votre réseau utilise peut-être l'API du MBTA ; la lecture reprend seule.  |
 | Un arrêt reste à « Aucun départ prévu »          | Normal la nuit, ou pour une ligne dont le prochain trajet n'est pas encore suivi.               |
@@ -129,6 +158,7 @@ de la vérification des arrêts, sauf un 429, ne retient jamais les départs.
 
 - Sans compte, sans clé, sans position : seuls les identifiants d'arrêts que
   vous tapez sont envoyés au MBTA, dans l'adresse des requêtes.
-- Données du MBTA (`api-v3.mbta.com`), utilisées selon le
-  [MassDOT Developers License Agreement](https://www.mass.gov/files/documents/2017/10/27/develop_license_agree_0.pdf).
+- Données : MassDOT / MBTA (`api-v3.mbta.com`), utilisées selon le
+  [MassDOT Developers License Agreement](https://cdn.mbta.com/sites/default/files/2023-08/mbta-massdot-develop-license-agreement.pdf). MassDOT ne donne aucune
+  garantie sur les données, cette intégration non plus.
 - Code de l'intégration : licence Apache 2.0.

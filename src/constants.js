@@ -5,7 +5,10 @@
 
 import { readFileSync } from 'node:fs';
 
-const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+/** The version of the package (the release bumps it): the User-Agent follows. */
+export const VERSION = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
 
 /** The public MBTA V3 API (JSON:API), used without a key. */
 export const API_BASE = 'https://api-v3.mbta.com';
@@ -13,7 +16,7 @@ export const API_BASE = 'https://api-v3.mbta.com';
 export const ACCEPT = 'application/vnd.api+json';
 
 /** An honest User-Agent naming the integration, never a browser's. */
-export const USER_AGENT = `gladys-mbta/${pkg.version} (+https://github.com/LM1LC3N7/gladys-mbta)`;
+export const USER_AGENT = `gladys-mbta/${VERSION} (+https://github.com/LM1LC3N7/gladys-mbta)`;
 
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
@@ -69,8 +72,12 @@ export const CONFIG_RETRY_MAX = 5 * MINUTE;
  * answer: the real-time feed is frozen, nothing is published.
  */
 export const FEED_STALE = 10 * MINUTE;
-/** A server `Date` further than this from the local clock is not believed. */
-export const DATE_SANITY = 24 * HOUR;
+/**
+ * A server `Date` further than this from the local clock is not believed: the
+ * local clock is wrong, or the answer is an old copy (a cache, a replay).
+ * Nothing is published then. The latency of the answer fits in it.
+ */
+export const CLOCK_SKEW = 5 * MINUTE;
 /** Departures counted on the counter: within this window. */
 export const WINDOW_MINUTES = 60;
 /** A departure further than this is ignored (an absurd time). */
@@ -93,8 +100,6 @@ export const ID_MAX = 64;
 export const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 export const DIRECTIONS = Object.freeze(['both', '0', '1']);
 
-/** The minutes features: 0 to one day. */
-export const MINUTES_MAX = 24 * 60;
 /** Counters are bounded. */
 export const COUNT_MAX = MAX_ITEMS;
 /** The texts published on the device, in characters. */
@@ -115,6 +120,11 @@ export const FEATURES = Object.freeze({
 
 export const ACTIONS = Object.freeze({ TEST: 'test' });
 export const SCENE_TRIGGER = 'new_alert';
+export const SOON_TRIGGER = 'departure_soon';
+/** The thresholds of the "departure approaching" trigger, in minutes. */
+export const SOON_THRESHOLDS = Object.freeze([1, 2, 3, 5, 10, 15]);
+/** Departures remembered per watch for that trigger. */
+export const SOON_MEMORY_MAX = 200;
 
 /** The alert effects offered as a scene filter; any other is `OTHER`. */
 export const ALERT_EFFECTS = Object.freeze([

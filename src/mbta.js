@@ -20,9 +20,12 @@ import {
   API_BASE,
   MAX_BODY_BYTES,
   MAX_ITEMS,
+  PAUSE_MAX,
   REQUEST_TIMEOUT,
   USER_AGENT,
 } from './constants.js';
+
+const RETRY_AFTER_MAX_SECONDS = PAUSE_MAX / 1000;
 
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
@@ -184,7 +187,8 @@ export function readHttpDate(value) {
 export function readRetryAfter(value, serverDate) {
   if (typeof value !== 'string') return null;
   const text = value.trim();
-  if (/^\d{1,6}$/.test(text)) return Number(text) * 1000;
+  // Any number of digits: a huge value is a long pause, bounded to 6 h here.
+  if (/^\d+$/.test(text)) return Math.min(Number(text), RETRY_AFTER_MAX_SECONDS) * 1000;
   const at = readHttpDate(text);
   if (at !== null && serverDate !== null) return Math.max(0, at - serverDate);
   return null;

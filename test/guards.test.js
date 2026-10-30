@@ -17,6 +17,7 @@ import {
   SECOND,
   alertResource,
   alertsDoc,
+  predictionsDoc,
   createApi,
   defaultWorld,
   errorAnswer,
@@ -24,6 +25,7 @@ import {
   published,
   setup,
   statusEn,
+  alertEvents,
 } from './helpers/setup.js';
 
 const N = (key) => F(1, key);
@@ -70,22 +72,34 @@ test('Last-Modified up to 1 min after the Date is believed (clock skew), not mor
   }
 });
 
-test('a Date up to 24 h off the local clock is believed, not more', async () => {
+test('a Date up to 5 min off the local clock is believed; more is a wrong clock or an old copy', async (t) => {
   for (const [off, expected] of [
-    [23 * 60 * MINUTE, [0]],
-    [25 * 60 * MINUTE, []],
+    [4 * MINUTE, [0]],
+    [-4 * MINUTE, [0]],
+    [6 * MINUTE, []],
+    [-6 * MINUTE, []],
+    // An answer of 3 hours ago replayed whole (a cache): Date, Last-Modified
+    // and departures consistent with each other, never fresh.
+    [-3 * HOUR, []],
+    [-20 * MINUTE, []],
   ]) {
-    const api = createApi((url, a) =>
-      url.includes('/predictions')
-        ? json(
-            { data: [] },
-            { date: a.clock.wall() + off, lastModified: a.clock.wall() + off - SECOND },
-          )
-        : defaultWorld(url),
-    );
-    const { begin, fake } = await setup({ api });
-    await begin();
-    assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), expected, `off ${off}`);
+    await t.test(`off ${off / MINUTE} min`, async () => {
+      const api = createApi((url, a) =>
+        url.includes('/predictions')
+          ? json(predictionsDoc([]), {
+              date: a.clock.wall() + off,
+              lastModified: a.clock.wall() + off - 3 * SECOND,
+            })
+          : defaultWorld(url),
+      );
+      const { begin, fake } = await setup({ api });
+      await begin();
+      assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), expected);
+      if (expected.length === 0) {
+        assert.match(statusEn(fake), /differs from the clock of this machine.*\((\+|-)\d+ min\)/);
+        assert.equal(fake.connectionStatus.connected, false);
+      }
+    });
   }
 });
 
@@ -160,7 +174,12 @@ test('an alert is announced when it changed within 2 h of the server time, not b
     alertResource('none', { created_at: null, updated_at: null, active_period: [] }),
   ];
   await wait(5 * MINUTE);
-  assert.deepEqual(fake.sceneEvents.map((e) => e.data.alert_id).sort(), ['in', 'started']);
+  assert.deepEqual(
+    alertEvents(fake)
+      .map((e) => e.data.alert_id)
+      .sort(),
+    ['in', 'started'],
+  );
 });
 
 test('at most 10 scene events per stop and read', async () => {
@@ -173,11 +192,11 @@ test('at most 10 scene events per stop and read', async () => {
     alertResource(`a${i}`, { created_at: created, severity: i % 11 }),
   );
   await wait(5 * MINUTE);
-  assert.equal(fake.sceneEvents.length, 10);
+  assert.equal(alertEvents(fake).length, 10);
   // The most severe first.
-  assert.equal(fake.sceneEvents[0].data.severity, 10);
+  assert.equal(alertEvents(fake)[0].data.severity, 10);
   await wait(5 * MINUTE);
-  assert.equal(fake.sceneEvents.length, 10, 'the 2 left are learnt, never sent late');
+  assert.equal(alertEvents(fake).length, 10, 'the 2 left are learnt, never sent late');
 });
 
 test('/data is read strictly: a pause of an unknown kind, a bad salt, odd watches', async () => {
@@ -343,7 +362,11 @@ test('a route filter not checked yet (the route check failed) never makes an emp
   });
   await begin();
   assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), []);
-  assert.equal(calls.count('alerts'), 0);
+  // The alerts are read anyway (the check never holds them), but an empty
+  // answer for an unchecked filter publishes nothing either.
+  assert.equal(calls.count('alerts'), 1);
+  assert.deepEqual(published(fake, N(FEATURES.ALERTS)), []);
+  assert.match(statusEn(fake), /alerts: No alert, and the stop could not be checked yet/);
   assert.match(statusEn(fake), /could not be checked yet/);
 });
 
@@ -423,7 +446,7 @@ test('an alert whose period starts in a few minutes is not announced yet', async
     }),
   ];
   await wait(5 * MINUTE);
-  assert.equal(fake.sceneEvents.length, 0);
+  assert.equal(alertEvents(fake).length, 0);
 });
 
 test('a disconnection while the configuration is read: nothing starts', async () => {

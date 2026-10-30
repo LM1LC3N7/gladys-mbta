@@ -37,7 +37,7 @@ import {
   CHECK_RETRY_MAX,
   CONFIG_RETRY_FIRST,
   CONFIG_RETRY_MAX,
-  DATE_SANITY,
+  CLOCK_SKEW,
   FEATURES,
   FEED_STALE,
   HOUR,
@@ -54,12 +54,15 @@ import {
   SCENE_TEXT_MAX,
   SCENE_TRIGGER,
   SECOND,
+  SOON_MEMORY_MAX,
+  SOON_THRESHOLDS,
+  SOON_TRIGGER,
   SEEN_KEEP,
   SEEN_MAX,
 } from './constants.js';
 import { normalizeConfig } from './config.js';
-import { buildDevices, watchIds } from './devices.js';
-import { M, configErrors, failure, formatTime, watchLabel } from './i18n.js';
+import { buildDevices, watchIds, watchPrefix } from './devices.js';
+import { M, configErrors, failure, formatClock, formatTime, watchLabel } from './i18n.js';
 import {
   alertsUrl,
   getJson,
@@ -76,6 +79,7 @@ import {
   alertText,
   bandOf,
   countWithin,
+  departureText,
   departuresFor,
   effectOf,
   sortAlerts,
@@ -83,6 +87,7 @@ import {
 } from './watch.js';
 
 const SAVE_BOUND = 2 * SECOND;
+const GLADYS_BOUND = 10 * SECOND;
 const STATUS_MAX = 1500;
 const LANGS = ['en', 'fr'];
 /** A `Last-Modified` this much after the `Date` of its answer is not believed. */
@@ -168,6 +173,10 @@ export class MbtaApp {
     this.checkFailure = null;
     this.publishedNames = null;
 
+    /** Per watch fingerprint: the minutes of each departure seen at the last read. */
+    this.soon = new Map();
+    /** Whether a round runs (a timer firing meanwhile waits for its end). */
+    this.inRound = false;
     /** Per slot: `{ dueMono, level }` of the next alerts read. */
     this.alertsDue = new Map();
 
@@ -469,6 +478,26 @@ export class MbtaApp {
       .slice(0, 32);
   }
 
+  /**
+   * A call to Gladys, never waited for more than 10 s (the SDK cuts each call
+   * at 15 s; this bound holds whatever the SDK does): a Gladys that does not
+   * answer never holds a round. Rejects when late, as a failed call.
+   */
+  async bounded(fn) {
+    let timer;
+    const late = new Promise((_, reject) => {
+      timer = this.timers.setTimeout(
+        () => reject(new Error('Gladys did not answer')),
+        GLADYS_BOUND,
+      );
+    });
+    try {
+      return await Promise.race([Promise.resolve().then(fn), late]);
+    } finally {
+      this.timers.clearTimeout(timer);
+    }
+  }
+
   /** Saves /data without ever waiting more than SAVE_BOUND for it. */
   async persist() {
     if (!this.loaded || this.storeStatus === 'unreadable') return false;
@@ -505,7 +534,9 @@ export class MbtaApp {
     try {
       const names = this.stopNames();
       this.publishedNames = JSON.stringify([...names]);
-      await this.gladys.publishDiscoveredDevices(buildDevices(this.gladys, config, names));
+      await this.bounded(() =>
+        this.gladys.publishDiscoveredDevices(buildDevices(this.gladys, config, names)),
+      );
     } catch (err) {
       this.logger.warn(`Discovery not published (${err?.name ?? 'Error'})`);
     }
@@ -540,7 +571,17 @@ export class MbtaApp {
       await this.updateStatus(gen);
       return;
     }
-    await this.round(gen);
+    // A round still running (a slow Gladys): this one comes right after it.
+    if (this.inRound) {
+      this.scheduleCycle(SECOND, gen);
+      return;
+    }
+    this.inRound = true;
+    try {
+      await this.round(gen);
+    } finally {
+      this.inRound = false;
+    }
   }
 
   /** One round: the stop check if needed, the departures, the alerts when due. */
@@ -551,6 +592,10 @@ export class MbtaApp {
     this.nextDueMono = start + config.refreshSeconds * SECOND;
     // The time of the attempt is in /data before the first request.
     this.persisted.lastAttemptAt = this.now();
+    // The next round is armed first: neither a slow /data nor a Gladys that
+    // does not answer a publication holds it back (armed again below, after
+    // a pause found by this round).
+    this.scheduleCycle(config.refreshSeconds * SECOND, gen);
     const saved = await this.persist();
     this.saveFailed = !saved && this.storeStatus !== 'unreadable';
     if (gen !== this.gen) return;
@@ -560,8 +605,7 @@ export class MbtaApp {
     if (gen !== this.gen) return;
     await this.readAllAlerts(gen, start);
     if (gen !== this.gen) return;
-    // The next round is armed before /data and the status: neither a slow
-    // save nor a slow Gladys holds it back.
+    // Armed again for what is left, after a pause this round may have found.
     const mono = this.monotonic();
     let delay = Math.max(0, this.nextDueMono - mono);
     if (this.pauseUntilMono !== null && this.pauseUntilMono > mono) {
@@ -577,16 +621,6 @@ export class MbtaApp {
       if (gen !== this.gen) return;
     }
     await this.updateStatus(gen);
-  }
-
-  /** A server date more than a day away from the local clock is not believed. */
-  believableDate(at) {
-    if (at === null) return null;
-    if (Math.abs(at - this.now()) > DATE_SANITY) {
-      this.logger.warn('The Date of the MBTA answer is more than a day off: not used');
-      return null;
-    }
-    return at;
   }
 
   /** The pause left, in ms (0 when none). */
@@ -675,8 +709,15 @@ export class MbtaApp {
    * `Last-Modified` within 10 minutes of it. `{ at }` or `{ kind }`.
    */
   freshness(answer) {
-    const at = this.believableDate(answer.serverDate);
-    if (at === null) return { kind: 'no_date' };
+    const at = answer.serverDate;
+    if (at === null || at === undefined) return { kind: 'no_date' };
+    // An answer dated more than 5 minutes away from this machine: its clock is
+    // wrong, or the answer is an old copy. Never counted as fresh.
+    const skew = at - this.now();
+    if (Math.abs(skew) > CLOCK_SKEW) {
+      this.logger.warn('The Date of the MBTA answer differs from the local clock: not used');
+      return { kind: 'clock', detail: Math.round(skew / MINUTE) };
+    }
     const lm = answer.lastModified;
     if (lm === null || lm === undefined || lm > at + FUTURE_SLACK || at - lm > FEED_STALE) {
       return { kind: 'stale' };
@@ -810,7 +851,9 @@ export class MbtaApp {
     if (!kind && read.unreadable) kind = 'unreadable';
     if (kind) {
       this.logger.warn(`Departures not published (${kind})`);
-      for (const watch of watches) this.recordFailure(watch, 'dep', { kind });
+      for (const watch of watches) {
+        this.recordFailure(watch, 'dep', { kind, detail: fresh.detail });
+      }
       return;
     }
     for (const watch of watches) {
@@ -842,36 +885,86 @@ export class MbtaApp {
       return;
     }
     const count = countWithin(departures);
-    const text = summary(departures, at, this.config.language);
+    const language = this.config.language;
     this.setResult(watch, 'dep', {
       ok: true,
-      readAt: this.now(),
+      // Times of the status from the server (`Date`), as the summary.
+      readAt: at,
       readMono: this.monotonic(),
       count,
       next: departures[0] ?? null,
     });
-    const ids = watchIds(this.gladys, watch.slot);
-    if (!this.isCreated(ids)) return;
-    const states = [];
-    if (departures[0]) {
-      states.push({
-        device_feature_external_id: ids.feature(FEATURES.NEXT),
-        state: departures[0].minutes,
-      });
+    const ids = watchIds(this.gladys, watch);
+    const soon = this.departuresSoon(watch, departures);
+    if (this.isCreated(ids)) {
+      // Every value at every read: a departure gone is replaced by its text
+      // "no departure", never left behind.
+      const states = [
+        {
+          device_feature_external_id: ids.feature(FEATURES.NEXT),
+          text: departureText(departures[0], at, language, 'next'),
+        },
+        {
+          device_feature_external_id: ids.feature(FEATURES.SECOND),
+          text: departureText(departures[1], at, language, 'second'),
+        },
+        { device_feature_external_id: ids.feature(FEATURES.DEPARTURES), state: count },
+        {
+          device_feature_external_id: ids.feature(FEATURES.SUMMARY),
+          text: summary(departures, at, language),
+        },
+      ];
+      try {
+        await this.bounded(() => this.gladys.publishStates(states));
+      } catch (err) {
+        this.logger.warn(`Watch ${watch.slot}: departures not published (${err?.name ?? 'Error'})`);
+      }
     }
-    if (departures[1]) {
-      states.push({
-        device_feature_external_id: ids.feature(FEATURES.SECOND),
-        state: departures[1].minutes,
-      });
+    for (const event of soon) {
+      try {
+        await this.bounded(() =>
+          this.gladys.publishSceneEvent(SOON_TRIGGER, { device: ids.device, ...event }),
+        );
+      } catch (err) {
+        this.logger.warn(`Watch ${watch.slot}: scene event not sent (${err?.name ?? 'Error'})`);
+      }
     }
-    states.push({ device_feature_external_id: ids.feature(FEATURES.DEPARTURES), state: count });
-    states.push({ device_feature_external_id: ids.feature(FEATURES.SUMMARY), text });
-    try {
-      await this.gladys.publishStates(states);
-    } catch (err) {
-      this.logger.warn(`Watch ${watch.slot}: departures not published (${err?.name ?? 'Error'})`);
+  }
+
+  /**
+   * The "departure approaching" trigger: a departure whose minutes crossed a
+   * threshold between two reads of this watch (from more than the threshold
+   * to the threshold or less). A departure seen for the first time (first
+   * read, after a start, or appearing already close) is only learnt.
+   */
+  departuresSoon(watch, departures) {
+    const key = this.fingerprint(watch);
+    const before = this.soon.get(watch.slot);
+    const previous = before && before.key === key ? before.minutes : null;
+    const events = [];
+    if (previous) {
+      for (const d of departures) {
+        const was = previous.get(d.id);
+        if (was === undefined) continue;
+        // The largest threshold first: the order of the crossings.
+        for (const threshold of [...SOON_THRESHOLDS].reverse()) {
+          if (was > threshold && d.minutes <= threshold) {
+            events.push({
+              threshold: String(threshold),
+              minutes: d.minutes,
+              route: d.label,
+              route_id: d.route,
+              headsign: d.headsign,
+              departure_time: formatClock(d.at),
+            });
+          }
+        }
+      }
     }
+    const minutes = new Map();
+    for (const d of departures.slice(0, SOON_MEMORY_MAX)) minutes.set(d.id, d.minutes);
+    this.soon.set(watch.slot, { key, minutes });
+    return events.slice(0, SCENE_EVENTS_PER_READ);
   }
 
   isCreated(ids) {
@@ -891,11 +984,6 @@ export class MbtaApp {
       const refused = this.refusal(watch);
       if (refused) {
         this.recordFailure(watch, 'alerts', { kind: refused });
-        continue;
-      }
-      if (!this.checked(watch)) {
-        // Without a confirmed stop, "no alert" could be a mistyped id.
-        this.recordFailure(watch, 'alerts', { kind: 'stop_unchecked' });
         continue;
       }
       if (this.pausedFor() > 0) {
@@ -919,7 +1007,15 @@ export class MbtaApp {
       if (kind) {
         this.alertsFailed(watch, start);
         this.logger.warn(`Watch ${watch.slot}: alerts not published (${kind})`);
-        this.recordFailure(watch, 'alerts', { kind });
+        this.recordFailure(watch, 'alerts', { kind, detail: fresh.detail });
+        continue;
+      }
+      // Read even when the stop check failed (it never holds the alerts), but
+      // "no alert" is only told for a stop the MBTA confirmed: read again at
+      // the next round until it is.
+      if (read.alerts.length === 0 && !this.checked(watch)) {
+        this.alertsDue.delete(watch.slot);
+        this.recordFailure(watch, 'alerts', { kind: 'alerts_unchecked' });
         continue;
       }
       this.alertsDue.set(watch.slot, { dueMono: start + ALERTS_INTERVAL, level: 0 });
@@ -937,20 +1033,22 @@ export class MbtaApp {
   async onAlerts(watch, alerts, at, gen) {
     this.setResult(watch, 'alerts', {
       ok: true,
-      readAt: this.now(),
+      readAt: at,
       readMono: this.monotonic(),
       count: alerts.length,
     });
-    const ids = watchIds(this.gladys, watch.slot);
+    const ids = watchIds(this.gladys, watch);
     if (this.isCreated(ids)) {
       try {
-        await this.gladys.publishStates([
-          { device_feature_external_id: ids.feature(FEATURES.ALERTS), state: alerts.length },
-          {
-            device_feature_external_id: ids.feature(FEATURES.ALERT_TEXT),
-            text: alertText(alerts, this.config.language),
-          },
-        ]);
+        await this.bounded(() =>
+          this.gladys.publishStates([
+            { device_feature_external_id: ids.feature(FEATURES.ALERTS), state: alerts.length },
+            {
+              device_feature_external_id: ids.feature(FEATURES.ALERT_TEXT),
+              text: alertText(alerts, this.config.language),
+            },
+          ]),
+        );
       } catch (err) {
         this.logger.warn(`Watch ${watch.slot}: alerts not published (${err?.name ?? 'Error'})`);
       }
@@ -990,11 +1088,13 @@ export class MbtaApp {
       .sort((a, b) => b[1] - a[1])
       .slice(0, SEEN_MAX);
     this.persisted.watches[watch.slot] = { fingerprint, seen: Object.fromEntries(kept) };
-    const device = watchIds(this.gladys, watch.slot).device;
+    const device = watchIds(this.gladys, watch).device;
     for (const alert of fresh.slice(0, SCENE_EVENTS_PER_READ)) {
       if (gen !== this.gen) return;
       try {
-        await this.gladys.publishSceneEvent(SCENE_TRIGGER, sceneData(device, alert));
+        await this.bounded(() =>
+          this.gladys.publishSceneEvent(SCENE_TRIGGER, sceneData(device, alert)),
+        );
       } catch (err) {
         this.logger.warn(`Watch ${watch.slot}: scene event not sent (${err?.name ?? 'Error'})`);
       }
@@ -1018,7 +1118,7 @@ export class MbtaApp {
     const kept = before && before.fingerprint === fingerprint ? before[part] : null;
     this.setResult(watch, part, {
       ok: false,
-      failure: { kind: result.kind, status: result.status },
+      failure: { kind: result.kind, status: result.status, detail: result.detail },
       // The last success, for the status: data from then.
       lastOkAt: kept?.ok ? kept.readAt : (kept?.lastOkAt ?? null),
       lastOkMono: kept?.ok ? kept.readMono : (kept?.lastOkMono ?? null),
@@ -1080,10 +1180,14 @@ export class MbtaApp {
         `${failure(kind, status, 'fr')} : lectures en pause jusqu'à ${formatTime(wall + paused, 'fr')}.`,
       );
     }
-    const why = (f) => ({
-      en: failure(f.kind, f.status, 'en'),
-      fr: failure(f.kind, f.status, 'fr'),
-    });
+    const why = (f) => {
+      const text = { en: failure(f.kind, f.status, 'en'), fr: failure(f.kind, f.status, 'fr') };
+      if (f.kind === 'clock' && Number.isFinite(f.detail)) {
+        text.en += ` (${f.detail > 0 ? '+' : ''}${f.detail} min)`;
+        text.fr += ` (${f.detail > 0 ? '+' : ''}${f.detail} min)`;
+      }
+      return text;
+    };
     const since = (r, limit) =>
       r.lastOkAt !== null
         ? {
@@ -1143,6 +1247,23 @@ export class MbtaApp {
         `${name.fr} : ${depText.fr} ; ${alertsText.fr}.`,
       );
     }
+    // Devices of stops no longer watched (a slot given another stop): never
+    // updated again, their last values stay in Gladys until deleted there.
+    const current = new Set(config.watches.map((w) => watchIds(this.gladys, w).device));
+    const prefix = watchPrefix(this.gladys);
+    const old = (this.gladys.devices ?? []).filter(
+      (d) =>
+        typeof d?.external_id === 'string' &&
+        d.external_id.startsWith(prefix) &&
+        !current.has(d.external_id),
+    );
+    if (old.length > 0) {
+      const names = old.map((d) => d.name).join(', ');
+      push(
+        `Not updated any more (stop no longer in the configuration), delete in Gladys: ${names}.`,
+        `Plus mis à jour (arrêt retiré de la configuration), à supprimer dans Gladys : ${names}.`,
+      );
+    }
     if (this.checkFailure) {
       const w = why(this.checkFailure);
       push(
@@ -1194,7 +1315,7 @@ export class MbtaApp {
     const key = JSON.stringify([connected, message]);
     if (key === this.lastStatus) return;
     try {
-      await this.gladys.setConnectionStatus(connected, message);
+      await this.bounded(() => this.gladys.setConnectionStatus(connected, message));
       this.lastStatus = key;
     } catch (err) {
       this.logger.warn(`Status not published (${err?.name ?? 'Error'})`);

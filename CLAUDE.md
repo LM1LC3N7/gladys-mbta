@@ -50,7 +50,8 @@ MBTA rules kept by the code: the `Accept: application/vnd.api+json` header (the 
 request at a time, 3 s between two starts, a hold when `x-ratelimit-remaining` runs low; never sooner than the
 interval (restart, reconnection, unchanged configuration, Discovery, test button; a restart whose /data cannot
 tell the last attempt waits 30 s); 429 and 5xx pauses kept in
-/data; minutes counted against the `Date` of the answer; nothing published for a failed, unreadable or stale
+/data; minutes counted against the `Date` of the answer, which must be within 5 minutes of the local clock; next and
+following departure are texts (Gladys cannot clear a number); device id = slot and stop; nothing published for a failed, unreadable or stale
 answer (`Last-Modified` more than 10 minutes before `Date`), nor "no departure" for an unconfirmed stop.
 
 ## Rules

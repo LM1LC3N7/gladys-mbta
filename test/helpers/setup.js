@@ -38,7 +38,13 @@ export const TWO = { watch1_stop: 'place-pktrm', watch2_stop: '1', watch2_name: 
 /** The time `begin` lets the first round run: 6 requests 3 s apart fit. */
 export const BEGIN = 20 * SECOND;
 
-export const F = (slot, key) => `ext:${SELECTOR}:watch:${slot}:${key}`;
+/** The stop of each slot in the configurations of the tests (HOME, TWO). */
+const STOP_OF = { 1: 'place-pktrm', 2: '1' };
+/** A feature id: the device is the slot and its stop. */
+export const F = (slot, key, stop = STOP_OF[slot]) =>
+  `ext:${SELECTOR}:watch:${slot}-${stop}:${key}`;
+/** A device id. */
+export const D = (slot, stop = STOP_OF[slot]) => `ext:${SELECTOR}:watch:${slot}-${stop}`;
 
 /** An ISO time with the Boston offset of the capture (EDT). */
 export const iso = (ms) => {
@@ -259,6 +265,11 @@ export const published = (fake, id) =>
   fake.states
     .filter((s) => s.device_feature_external_id === id)
     .map((s) => (s.text !== undefined ? s.text : s.state));
+
+/** The "new alert" scene events. */
+export const alertEvents = (fake) => fake.sceneEvents.filter((e) => e.key === 'new_alert');
+/** The "departure approaching" scene events. */
+export const soonEvents = (fake) => fake.sceneEvents.filter((e) => e.key === 'departure_soon');
 
 /** The status message in English. */
 export const statusEn = (fake) => fake.connectionStatus?.message?.en ?? '';

@@ -7,12 +7,15 @@ public [MBTA V3 API](https://www.mbta.com/developers/v3-api). No account, no API
 > This integration is not an official source and is not affiliated with the MBTA or MassDOT. Before you travel,
 > check [mbta.com](https://www.mbta.com/) or the stop signs.
 
-MBTA data is used under the MassDOT Developers License Agreement.
+Data: MassDOT / MBTA, used under the [MassDOT Developers License Agreement](https://cdn.mbta.com/sites/default/files/2023-08/mbta-massdot-develop-license-agreement.pdf). MassDOT makes no warranty on
+the data, nor does this integration.
 
 - Up to five watched stops (a station, a platform or a bus stop, optionally limited to some routes and one
-  direction), one Gladys device each: next and following departure (minutes), predicted departures within 60
-  minutes, alerts in effect (counters), a departures summary and the most severe alert (texts).
-- A scene trigger "New MBTA alert at a stop" (filters: stop, effect, severity).
+  direction), one Gladys device per slot and stop: predicted departures within 60
+  minutes, alerts in effect (counters), next and following departure, a departures summary and the most severe
+  alert (texts: a departure gone is replaced by "no departure", never left as a number).
+- Scene triggers "MBTA departure approaching" (1 to 15 minutes) and "New MBTA alert at a stop" (filters: stop,
+  effect, severity).
 - One predictions request for every stop per interval (30 to 600 s), the alerts every 5 minutes, one request at
   a time, 3 s apart, under the 20 requests per minute of the keyless API; pauses after a 429 or a 5xx, kept
   across restarts.

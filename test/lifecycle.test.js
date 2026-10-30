@@ -24,6 +24,7 @@ import {
   published,
   setup,
   statusEn,
+  alertEvents,
 } from './helpers/setup.js';
 
 const N = (key) => F(1, key);
@@ -344,7 +345,7 @@ test('the alerts seen survive a restart: no scene event twice', async () => {
     await app.start(HOME);
     await wait(30 * SECOND);
     assert.deepEqual(
-      fake.sceneEvents.map((e) => e.data.alert_id),
+      alertEvents(fake).map((e) => e.data.alert_id),
       ['2'],
     );
   }
@@ -356,7 +357,7 @@ test('the alerts seen survive a restart: no scene event twice', async () => {
     });
     await app.start(HOME);
     await wait(30 * SECOND);
-    assert.equal(fake.sceneEvents.length, 0);
+    assert.equal(alertEvents(fake).length, 0);
   }
 });
 
@@ -368,7 +369,7 @@ test('a changed stop starts a new baseline: no scene event for what is already t
   await begin();
   await app.start({ watch1_stop: '1' });
   await wait(20 * SECOND);
-  assert.equal(fake.sceneEvents.length, 0);
+  assert.equal(alertEvents(fake).length, 0);
 });
 
 test('the status stays within 1500 characters', async () => {

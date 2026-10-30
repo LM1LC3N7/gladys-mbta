@@ -5,7 +5,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACCEPT, FEATURES, REQUEST_GAP } from '../src/constants.js';
+import { ACCEPT, FEATURES, REQUEST_GAP, VERSION } from '../src/constants.js';
+
+/** The minutes of a departure text ("… in 4 min (08:09)"). */
+const minutesOf = (text) => Number(/ in (\d+) min /.exec(text)?.[1]);
 import { createMemoryStore } from '../src/store.js';
 import {
   CAPTURED_AT,
@@ -30,6 +33,7 @@ import {
   setup,
   statusEn,
   stopResource,
+  alertEvents,
 } from './helpers/setup.js';
 
 const N = (key) => F(1, key);
@@ -43,7 +47,9 @@ test('the first round: stop check, departures, alerts; published from the captur
   );
   for (const call of api.calls) {
     assert.equal(call.init.headers.Accept, ACCEPT);
-    assert.match(call.init.headers['User-Agent'], /^gladys-mbta\/0\.1\.0 \(\+https:\/\/github/);
+    assert.ok(
+      call.init.headers['User-Agent'].startsWith(`gladys-mbta/${VERSION} (+https://github`),
+    );
     assert.equal(call.init.redirect, 'error');
   }
   // 3 s at least between the starts of two requests.
@@ -51,8 +57,12 @@ test('the first round: stop check, departures, alerts; published from the captur
     assert.ok(api.calls[i].at - api.calls[i - 1].at >= REQUEST_GAP);
   }
   // Green Line E at 06:16:15Z, D at 06:16:54Z, E at 06:59:38Z; read at 06:03:08Z.
-  assert.deepEqual(published(fake, N(FEATURES.NEXT)), [13]);
-  assert.deepEqual(published(fake, N(FEATURES.SECOND)), [13]);
+  assert.deepEqual(published(fake, N(FEATURES.NEXT)), [
+    'Green Line E → Heath Street in 13 min (02:16)',
+  ]);
+  assert.deepEqual(published(fake, N(FEATURES.SECOND)), [
+    'Green Line E → Heath Street in 13 min (02:16)',
+  ]);
   assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), [7]);
   const [text] = published(fake, N(FEATURES.SUMMARY));
   assert.match(
@@ -190,7 +200,9 @@ test('an empty stop is 0 only once the MBTA confirmed the stop', async () => {
   stopsDown = false;
   await wait(MINUTE);
   assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), [0]);
-  assert.deepEqual(published(fake, N(FEATURES.NEXT)), [], 'no minutes without a departure');
+  // Never a number for a departure that does not exist: the texts say so.
+  assert.deepEqual(published(fake, N(FEATURES.NEXT)), ['No predicted departure (read 02:04)']);
+  assert.deepEqual(published(fake, N(FEATURES.SECOND)), ['No following departure (read 02:04)']);
   assert.match(published(fake, N(FEATURES.SUMMARY))[0], /No predicted departure/);
   // The alerts skipped while unchecked come with the next round, not 5 min later.
   assert.deepEqual(published(fake, N(FEATURES.ALERTS)), [0]);
@@ -239,7 +251,7 @@ test('a route filter: resolved by id or bus number, a route not calling refused'
     const config = { watch1_stop: 'place-pktrm', watch1_routes: 'red, sl1' };
     const { begin, fake, api } = await setup({ config, api: createApi(world) });
     await begin();
-    assert.deepEqual(published(fake, N(FEATURES.NEXT)), [2]);
+    assert.deepEqual(published(fake, N(FEATURES.NEXT)).map(minutesOf), [2]);
     assert.deepEqual(published(fake, N(FEATURES.DEPARTURES)), [2]);
     const alerts = api.calls.find((c) => c.kind === 'alerts');
     assert.match(alerts.url, /filter%5Broute%5D=Red%2C741/);
@@ -269,7 +281,7 @@ test('the direction filter', async () => {
     api: createApi(world),
   });
   await begin();
-  assert.deepEqual(published(fake, N(FEATURES.NEXT)), [4]);
+  assert.deepEqual(published(fake, N(FEATURES.NEXT)).map(minutesOf), [4]);
   assert.match(api.calls.find((c) => c.kind === 'alerts').url, /filter%5Bdirection_id%5D=0/);
 });
 
@@ -290,8 +302,8 @@ test('two stops in one predictions request; a bus stop matched directly', async 
   await begin();
   assert.equal(api.count('predictions'), 1);
   assert.match(api.calls.find((c) => c.kind === 'predictions').url, /place-pktrm%2C1&/);
-  assert.deepEqual(published(fake, F(1, FEATURES.NEXT)), [4]);
-  assert.deepEqual(published(fake, F(2, FEATURES.NEXT)), [9]);
+  assert.deepEqual(published(fake, F(1, FEATURES.NEXT)).map(minutesOf), [4]);
+  assert.deepEqual(published(fake, F(2, FEATURES.NEXT)).map(minutesOf), [9]);
   assert.equal(api.count('alerts'), 2);
   assert.equal(fake.discoveredDevices[1].name, 'Bus home');
 });
@@ -368,7 +380,7 @@ test('alerts: count, most severe text, scene event for a new one only', async ()
   const { begin, fake, wait, clock } = await setup({ api });
   await begin();
   assert.deepEqual(published(fake, N(FEATURES.ALERTS)), [1]);
-  assert.equal(fake.sceneEvents.length, 0, 'the first read only learns');
+  assert.equal(alertEvents(fake).length, 0, 'the first read only learns');
   const now = clock.wall();
   list = [
     alertResource(1, { severity: 3 }),
@@ -389,15 +401,15 @@ test('alerts: count, most severe text, scene event for a new one only', async ()
   await wait(5 * MINUTE);
   assert.deepEqual(published(fake, N(FEATURES.ALERTS)), [1, 3]);
   assert.equal(published(fake, N(FEATURES.ALERT_TEXT)).at(-1), 'Synthetic severe. (2 more alerts)');
-  assert.equal(fake.sceneEvents.length, 1);
-  const { key, data } = fake.sceneEvents[0];
+  assert.equal(alertEvents(fake).length, 1);
+  const { key, data } = alertEvents(fake)[0];
   assert.equal(key, 'new_alert');
   assert.equal(data.alert_id, '2');
   assert.equal(data.effect, 'SUSPENSION');
   assert.equal(data.severity_band, 'severe');
-  assert.equal(data.device, 'ext:mbta:watch:1');
+  assert.equal(data.device, 'ext:mbta:watch:1-place-pktrm');
   await wait(5 * MINUTE);
-  assert.equal(fake.sceneEvents.length, 1, 'never twice');
+  assert.equal(alertEvents(fake).length, 1, 'never twice');
 });
 
 test('an alert answer with an unreadable alert publishes no count', async () => {
