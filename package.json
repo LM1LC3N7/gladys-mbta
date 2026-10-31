@@ -1,6 +1,6 @@
 {
   "name": "gladys-mbta",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Unofficial MBTA integration for Gladys Assistant: next departures (subway, bus, commuter rail, ferry) and service alerts at your stops, from the public MBTA V3 API.",
   "type": "module",

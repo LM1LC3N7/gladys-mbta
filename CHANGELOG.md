@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-31
+
 ### Added
 
 - Up to five watched MBTA stops (station, platform or bus stop; optional route filter and direction), each one a
@@ -23,3 +25,6 @@ the notes of the version's GitHub Release.
   429 or a 5xx, kept across restarts; no read sooner than the interval after a restart.
 - Nothing published from a failed, unreadable or stale answer, nor from an answer dated more than 5 minutes away
   from the local clock, nor "no departure" for a stop the MBTA has not confirmed.
+
+[Unreleased]: https://github.com/LM1LC3N7/gladys-mbta/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/LM1LC3N7/gladys-mbta/releases/tag/v0.1.1
