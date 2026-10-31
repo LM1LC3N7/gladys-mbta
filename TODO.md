@@ -97,3 +97,13 @@
   "departure not seen before" skip of the approaching trigger (`undefined > n` is false), the arming of the next
   round at its start and again at its end (each alone keeps the period, the Gladys calls being bounded), and the
   reviewer's P10, P12, P23, L2 and L14 (guards doubled).
+
+## Next patch (review r2, 21a709a)
+
+- n1: when /stops fails and alerts are empty, alerts are re-read every round (12.4 req/min with 5 stops at 30 s) instead of every 5 min; fix or correct the docs.
+- n2: the "departure approaching" trigger has no hysteresis (a wobbling forecast can fire again).
+- n3: after a read gap, several thresholds fire together.
+- n4: at most 10 events per read, undocumented; no route filter on the trigger.
+- n5/n6: tests for the 200-entry trigger memory cap (N16) and the `isCreated` guard in onAlerts (S13c).
+- n7: trigger memory is in-process only (documented).
+- Later: numeric counters "departures within 5 / 15 min" for scenes.
