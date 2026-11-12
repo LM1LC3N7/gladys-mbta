@@ -65,9 +65,9 @@ test('the store basics; one version in the four places, never pinned', () => {
   );
   assert.deepEqual(manifest.categories, ['transport']);
   assert.deepEqual(manifest.transports, ['cloud']);
-  assert.equal(manifest.gladys_version, '>=5.1.0', 'scene_triggers need 5.1.0');
+  assert.equal(manifest.gladys_version, '>=5.3.0', 'scene_triggers need 5.1.0');
   assert.equal(manifest.keywords, undefined);
-  assert.equal(manifest.countries, undefined);
+  assert.deepEqual(manifest.countries, ['US']);
   assert.equal(manifest.location, undefined, 'the house location is never asked');
   assert.match(
     manifest.cover_image,
