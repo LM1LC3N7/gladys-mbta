@@ -2,12 +2,12 @@
 
 ## Before announcing
 
-- [ ] Install it on a real Gladys 5.1+ and add a stop: device creation, the departure texts and the summary in the
+- [ ] Install it on a real Gladys 5.3+ and add a stop: device creation, the departure texts and the summary in the
       dashboard, the scene trigger in the scene editor.
 - [ ] Turn on "Private vulnerability reporting" (SECURITY.md points there).
 - [ ] Add the `gladys-assistant-integration` topic to publish in the store (after the first release: the store
       validator needs the GHCR image).
-- [ ] Store metadata kept out of the manifest (no `keywords` / `countries` fields): countries US; keywords
+- [ ] Store metadata kept out of the manifest (no `keywords` field; `countries: ["US"]` is declared): keywords
       MBTA, Boston, subway, bus, commuter rail, transit, departures, T.
 
 ## To confirm over time on the live API
